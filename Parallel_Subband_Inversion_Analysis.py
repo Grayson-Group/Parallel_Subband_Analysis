@@ -132,7 +132,7 @@ Keeping track of data
 '''
 ###########################
 USE THESE PARAMETERS:
-  I = 1e-6
+  I = 2e-6
   Iscalar = 0.97
   Rotate = [10, 11.5, 12.1]
     
@@ -176,7 +176,8 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 0.97, Rotate 
     
     
     #file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
-    file_path = "D230831B 2nd cooldown\Full Sweeps"
+    #file_path = "Parallel_Subband_Analysis/D230831B 2nd cooldown/Full Sweeps"
+    file_path = "D230831B 2nd cooldown/Full Sweeps"
     
     if lockin2XX == False:
         file_name = "D230831B_2_"
