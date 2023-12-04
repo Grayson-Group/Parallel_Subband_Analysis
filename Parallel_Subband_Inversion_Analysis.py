@@ -129,7 +129,20 @@ Keeping track of data
 
 
 
-def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate = [0,0,0], ne = 4E15):
+'''
+###########################
+USE THESE PARAMETERS:
+  I = 1e-6
+  Iscalar = 0.97
+  Rotate = [10, 11.5, 12.1]
+    
+###########################
+'''
+
+
+#TO DO: Make Rotate parameter lockin-specific, NOT Rxx/Rxy specific
+
+def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15):
 
     '''
         Vg: Gate voltage (mV) (selects file of this gate voltage)
