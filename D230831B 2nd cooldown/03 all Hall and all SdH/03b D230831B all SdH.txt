@@ -1,0 +1,23 @@
+lockin1_osc,c,0.2
+lockin1_timeconstant,c,1
+lockin2_timeconstant,c,1
+lockin3_timeconstant,c,1
+lockin4_timeconstant,c,1
+magnet_sweep,x,7.5,1,1625,7
+magnet_sweep,x,1,0,500,6
+lockin1_osc,c,0.5
+magnet_sweep,x,0,0.2,2000,6
+magnet_sweep,c,0
+lockin1_osc,c,0
+end
+
+
+*** CONTACTS: ***
+
+D230831B, gate at 0
+
+Current: 2nA from 5 to 19 (GND)
+Rxx1: 	11 to 13
+Rxx2: 	 2 to 24
+Rxx3: 	13 to 15
+Rxx4: 	24 to 22

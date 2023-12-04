@@ -1,0 +1,18 @@
+lockin1_osc,c,0.1
+lockin1_timeconstant,c,1
+lockin2_timeconstant,c,1
+lockin3_timeconstant,c,1
+
+magnet_sweep,x,0,0.2,200,5
+lockin1_osc,c,0
+end
+
+
+*** CONTACTS: ***
+
+D230831B
+
+Current: 2nA from 5 to 19 (GND)
+Rxy1: 	11 to  2
+Rxy2: 	13 to 24
+Rxy3: 	15 to 22

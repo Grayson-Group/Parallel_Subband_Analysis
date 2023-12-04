@@ -1,0 +1,41 @@
+lockin1_osc,c,0.2
+lockin1_timeconstant,c,1
+lockin2_timeconstant,c,1
+lockin3_timeconstant,c,1
+magnet_sweep,c,0
+magnet_sweep,x,0,1,400,6
+magnet_sweep,x,1,5,800,7
+magnet_sweep,x,5,12,700,8
+smu1_setvalue,x,0,0.6,30,3
+magnet_sweep,x,12,5,700,8
+magnet_sweep,x,5,1,1,800,7
+magnet_sweep,x,1,0,400,6
+smu1_setvalue,x,0.6,0.5,10,3
+magnet_sweep,x,0,1,400,6
+magnet_sweep,x,1,5,800,7
+magnet_sweep,x,5,12,700,8
+smu1_setvalue,x,0.5,0.45,10,3
+magnet_sweep,x,12,5,700,8
+magnet_sweep,x,5,1,1,800,7
+magnet_sweep,x,1,0,400,6
+smu1_setvalue,x,0.45,0.4,10,3
+magnet_sweep,x,0,1,400,6
+magnet_sweep,x,1,5,800,7
+magnet_sweep,x,5,12,700,8
+smu1_setvalue,x,0.4,0.28,24,3
+magnet_sweep,x,12,5,700,8
+magnet_sweep,x,5,1,1,800,7
+magnet_sweep,x,1,0,400,6
+smu1_setvalue,x,0.35,0,35,3
+lockin1_osc,c,0
+end
+
+
+*** CONTACTS: ***
+
+D230831B
+
+Current: 2nA from 5 to 19 (GND)
+Rxx1: 	11 to 15
+Rxy2: 	13 to 24
+Rxy3: 	 2 to 22

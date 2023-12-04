@@ -1,0 +1,222 @@
+23.10.2023 at 18:53:37:
+a constant value 0.1 is set to lockin1_osc. 
+No data will be saved.
+
+23.10.2023 at 18:53:37:
+a constant value 1 is set to lockin1_timeconstant. 
+No data will be saved.
+
+23.10.2023 at 18:53:43:
+a constant value 1 is set to lockin2_timeconstant. 
+No data will be saved.
+
+23.10.2023 at 18:53:48:
+a constant value 1 is set to lockin3_timeconstant. 
+No data will be saved.
+
+23.10.2023 at 18:53:53:
+a constant value 1 is set to lockin4_timeconstant. 
+No data will be saved.
+
+23.10.2023 at 18:53:58:
+counter from 0 to 2880 in 2880 steps with 58 seconds wait. 
+Data are being saved to 23102023_185358.dat.
+
+Note: The user manually aborted this measurement.
+
+25.10.2023 at 09:57:38:
+a constant value 0.1 is set to lockin1_osc. 
+No data will be saved.
+
+25.10.2023 at 09:57:38:
+a constant value 1 is set to lockin1_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 09:57:43:
+a constant value 1 is set to lockin2_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 09:57:49:
+a constant value 1 is set to lockin3_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 09:57:54:
+magnet_sweep from 0 to 0.2 in 200 steps with 5 seconds wait. 
+Data are being saved to 25102023_095754.dat.
+
+Note: The user manually aborted this measurement.
+
+25.10.2023 at 11:43:44:
+a constant value 0.1 is set to lockin1_osc. 
+No data will be saved.
+
+25.10.2023 at 11:43:44:
+a constant value 1 is set to lockin1_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 11:43:49:
+a constant value 1 is set to lockin2_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 11:43:55:
+a constant value 1 is set to lockin3_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 11:44:00:
+magnet_sweep from 0 to 0.2 in 200 steps with 5 seconds wait. 
+Data are being saved to 25102023_114400.dat.
+
+25.10.2023 at 12:10:39:
+a constant value 0 is set to lockin1_osc. 
+No data will be saved.
+
+Note: Lockin1 oscillator voltage was adjusted to min. value of 0.004.
+
+25.10.2023 at 13:13:03:
+a constant value 0.2 is set to lockin1_osc. 
+No data will be saved.
+
+25.10.2023 at 13:13:03:
+a constant value 1 is set to lockin1_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 13:13:09:
+a constant value 1 is set to lockin2_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 13:13:14:
+a constant value 1 is set to lockin3_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 13:13:19:
+smu1_setvalue from 0 to 0.75 in 150 steps with 6 seconds wait. 
+Data are being saved to 25102023_131319.dat.
+
+25.10.2023 at 13:35:09:
+smu1_setvalue from 0.75 to -0.4 in 230 steps with 6 seconds wait. 
+Data are being saved to 25102023_133509.dat.
+
+25.10.2023 at 14:08:26:
+smu1_setvalue from -0.4 to 0 in 80 steps with 6 seconds wait. 
+Data are being saved to 25102023_140825.dat.
+
+25.10.2023 at 14:20:26:
+a constant value 0 is set to lockin1_osc. 
+No data will be saved.
+
+Note: Lockin1 oscillator voltage was adjusted to min. value of 0.004.
+
+25.10.2023 at 14:57:49:
+a constant value 0.2 is set to lockin1_osc. 
+No data will be saved.
+
+25.10.2023 at 14:57:50:
+a constant value 1 is set to lockin1_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 14:57:55:
+a constant value 1 is set to lockin2_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 14:58:00:
+a constant value 1 is set to lockin3_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 14:58:05:
+a constant value 0.1 is set to magnet_sweep. 
+No data will be saved.
+
+25.10.2023 at 15:00:12:
+smu1_setvalue from 0 to 0.7 in 70 steps with 6 seconds wait. 
+Data are being saved to 25102023_150012.dat.
+
+25.10.2023 at 15:10:42:
+smu1_setvalue from 0.7 to 0 in 70 steps with 6 seconds wait. 
+Data are being saved to 25102023_151042.dat.
+
+25.10.2023 at 15:20:59:
+smu1_setvalue from 0 to 0.65 in 65 steps with 6 seconds wait. 
+Data are being saved to 25102023_152059.dat.
+
+25.10.2023 at 15:30:32:
+smu1_setvalue from 0.65 to 0 in 65 steps with 6 seconds wait. 
+Data are being saved to 25102023_153032.dat.
+
+25.10.2023 at 15:40:05:
+smu1_setvalue from 0 to 0.6 in 60 steps with 6 seconds wait. 
+Data are being saved to 25102023_154005.dat.
+
+25.10.2023 at 15:48:55:
+smu1_setvalue from 0.6 to 0 in 60 steps with 6 seconds wait. 
+Data are being saved to 25102023_154855.dat.
+
+25.10.2023 at 15:57:45:
+a constant value 0 is set to lockin1_osc. 
+No data will be saved.
+
+Note: Lockin1 oscillator voltage was adjusted to min. value of 0.004.
+
+25.10.2023 at 16:01:41:
+a constant value 0.2 is set to lockin1_osc. 
+No data will be saved.
+
+25.10.2023 at 16:01:41:
+a constant value 1 is set to lockin1_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 16:01:47:
+a constant value 1 is set to lockin2_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 16:01:52:
+a constant value 1 is set to lockin3_timeconstant. 
+No data will be saved.
+
+25.10.2023 at 16:01:58:
+a constant value 0 is set to magnet_sweep. 
+No data will be saved.
+
+25.10.2023 at 16:03:11:
+magnet_sweep from 0 to 1 in 400 steps with 6 seconds wait. 
+Data are being saved to 25102023_160311.dat.
+
+25.10.2023 at 17:02:27:
+magnet_sweep from 1 to 5 in 800 steps with 7 seconds wait. 
+Data are being saved to 25102023_170227.dat.
+
+25.10.2023 at 19:53:21:
+magnet_sweep from 5 to 12 in 700 steps with 8 seconds wait. 
+Data are being saved to 25102023_195321.dat.
+
+25.10.2023 at 23:28:46:
+smu1_setvalue from 0 to 0.6 in 30 steps with 3 seconds wait. 
+Data are being saved to 25102023_232846.dat.
+
+25.10.2023 at 23:31:48:
+magnet_sweep from 12 to 5 in 700 steps with 8 seconds wait. 
+Data are being saved to 25102023_233148.dat.
+
+26.10.2023 at 03:06:53:
+magnet_sweep from 5 to 1 in 1 steps with 800 seconds wait. 
+Data are being saved to 26102023_030653.dat.
+
+26.10.2023 at 04:00:53:
+magnet_sweep from 1 to 0 in 400 steps with 6 seconds wait. 
+Data are being saved to 26102023_040053.dat.
+
+26.10.2023 at 05:02:11:
+smu1_setvalue from 0.6 to 0.5 in 10 steps with 3 seconds wait. 
+Data are being saved to 26102023_050211.dat.
+
+26.10.2023 at 05:03:17:
+magnet_sweep from 0 to 1 in 400 steps with 6 seconds wait. 
+Data are being saved to 26102023_050317.dat.
+
+26.10.2023 at 06:02:40:
+magnet_sweep from 1 to 5 in 800 steps with 7 seconds wait. 
+Data are being saved to 26102023_060240.dat.
+
+26.10.2023 at 08:50:59:
+magnet_sweep from 5 to 12 in 700 steps with 8 seconds wait. 
+Data are being saved to 26102023_085059.dat.
+
