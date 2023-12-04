@@ -132,7 +132,7 @@ Keeping track of data
 '''
 ###########################
 USE THESE PARAMETERS:
-  I = 1e-6
+  I = 2e-6
   Iscalar = 0.97
   Rotate = [10, 11.5, 12.1]
     
@@ -142,7 +142,7 @@ USE THESE PARAMETERS:
 
 #TO DO: Make Rotate parameter lockin-specific, NOT Rxx/Rxy specific
 
-def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15):
+def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15):
 
     '''
         Vg: Gate voltage (mV) (selects file of this gate voltage)

@@ -29,6 +29,15 @@ import Parallel_Subband_Inversion_Analysis as PSIA
     
 
 
+###########################
+#USE THESE PARAMETERS FOR ParallelAnalysis:
+#  I = 2e-6
+#  Iscalar = 0.97
+#  Rotate = [10, 11.5, 12.1]
+    
+###########################
+'''
+
 
 if __name__ == "__main__":
     
