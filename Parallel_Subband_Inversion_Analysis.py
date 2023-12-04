@@ -150,9 +150,10 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate =
     
     
     PlotRAWXX = 1
-    PlotRAWXY = 1
-    PlotINVXX = 1
-    PlotINVXY = 1
+    PlotRAWXY = 0
+    PlotINVXX = 0
+    PlotINVXY = 0
+    PlotFFTXX = 1
     
     SaveRAWXX = False
     SaveRAWXY = False
@@ -162,8 +163,8 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate =
     
     
     
-    #file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
-    file_path = "D230831B 2nd cooldown\Full Sweeps"
+    # file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
+    # file_path = "C:\\Users\\thoma\\OneDrive\\Documents\\Research Materials\\ETH Zurich Materials\\Code with Chris\\Parallel_Subband_Analysis\\D230831B 2nd cooldown\\Full Sweeps"
     
     if lockin2XX == False:
         file_name = "D230831B_2_"
@@ -497,7 +498,43 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate =
                 plt.savefig("plots/INVXY_2_" + str(Vg) + ".png")
             else:
                 plt.savefig("plots/INVXY_4_" + str(Vg) + ".png")
+
+
+
+    if PlotFFTXX == 1:
+        D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x,D230831B_5_data.An_Field) # First Deriv
         
+        window_size = 4000
+        print(len(D230831B_5_data.Rxx_grad))
+        # window = [(300+window_size),300]
+        window = [-1,0]
+        # print(len(D230831B_5_data.Rxx_x), window)
+        
+
+        D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=0,background_mode="None",extra_point_inds=200, start_point=window[0],
+                                                        chop_point = window[1],invert=False, show_plot=False)
+        D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos,
+                                                                                            invert=False,scaling_order=1.5,scaling_mode="None")
+        
+        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=1,show_plot=False,invert=False)
+        
+        # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
+        D230831B_5_delt_B_inv = 1/D230831B_5_B_inv[1:-1] - 1/D230831B_5_B_inv[0:-2]
+        D230831B_5_delt_B_inv_av = np.mean(D230831B_5_delt_B_inv)
+        n_points = 8*len(D230831B_5_R_inv)
+        D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)
+        D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *c.e / c.h
+
+
+        fft_start = 10
+        fft_cutoff = -2
+        plt.figure("FFT_XX")
+        peaks = sig.find_peaks(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), 
+                               height = 0.1*np.amax(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])))
+        # print(peaks)
+        # peak_density = D230831B_5_f_array[fft_start:fft_cutoff][indexOf(np.abs(D230831B_5_trans[fft_start:fft_cutoff]),np.amax(np.abs(D230831B_5_trans[fft_start:fft_cutoff])))]
+        # print("Density n =  ",peak_density*1e-4,r" cm^-2$")
+        plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
         
         
         
@@ -627,10 +664,12 @@ if __name__ == "__main__":
             rho_det_tot = rho_xy_tot**2 + rho_xx_tot**2
             # names = [('rho_xx_par_nu1','rho_xy_par_nu1')]
             #### ne*c.e/An_Field
-            
+            #### nu*c.e**2/c.h
+
+
             nu = 1
             rho_xx_par_nu1 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-            rho_xy_par_nu1 = (rho_xy_tot - rho_det_tot*ne*c.e/An_Field) * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
+            rho_xy_par_nu1 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h) * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
             nu = 2
             rho_xx_par_nu2 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
             rho_xy_par_nu2 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)

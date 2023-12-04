@@ -35,12 +35,14 @@ if __name__ == "__main__":
     Von_Klitz = 25812.80745
     
     
-    #inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 000, lockin2XX = False, I = 2e-6, Iscaler = 0.9707, Rotate = [10, 12.1, 11.5], ne = 4E15)
-    inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 000, lockin2XX = True, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
-    inv2, nu_bounds2 = PSIA.ParallelAnalysis(Vg = 100, lockin2XX = True, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
+    inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 250, lockin2XX = False, I = 2e-6, Iscaler = 0.9707, Rotate = [10, 12.1, 11.5], ne = 4E15)
+    # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 100, lockin2XX = True, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
     
+    # inv2, nu_bounds2 = PSIA.ParallelAnalysis(Vg = 100, lockin2XX = True, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
     
-    new_bounds = PSIA.scaling(inv, inv2, 0.3, nu_bounds[1], False)
+    plt.show()
+    
+    # new_bounds = PSIA.scaling(inv, inv2, 0.3, nu_bounds[1], False)
     
     
     #plt.plot(inv2.B_field[new_bounds[0]:new_bounds[1]], inv2.Rxx[new_bounds[0]:new_bounds[1]])
