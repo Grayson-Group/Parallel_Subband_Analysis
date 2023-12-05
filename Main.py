@@ -34,9 +34,34 @@ if __name__ == "__main__":
     
     Von_Klitz = 25812.80745
     
+
+    Vg_val = 250
+
+
+    ### Vg vals where lockin2XX should be True:
+    lockin2_Vgs = [000, 100, 250]
+
+    ### Vg vals where lockin2XX should be False:
+    lockin4_Vgs = [200]
+
+    if Vg_val in lockin2_Vgs:
+        lockin2xx_bool = True
+        Rotate_list = [10, 11.5, 12.1]
+    elif Vg_val in lockin4_Vgs:
+        lockin2xx_bool = False
+        Rotate_list = [10, 12.1, 11.5]
+
+    ### Run ParallelAnalysis with input Vg and neccessary lockin2xx bool and Rotate list
     
-    inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 250, lockin2XX = False, I = 2e-6, Iscaler = 0.9707, Rotate = [10, 12.1, 11.5], ne = 4E15)
+    # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+    #                                        B_start = 0, B_end = 1.5)
+    inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+                                           B_start = 1.5, B_end = 3)
+    
+
+    # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 000, lockin2XX = False, I = 2e-6, Iscaler = 0.9707, Rotate = [10, 12.1, 11.5], ne = 4E15)
     # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 100, lockin2XX = True, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
+    # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 200, lockin2XX = False, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
     
     # inv2, nu_bounds2 = PSIA.ParallelAnalysis(Vg = 100, lockin2XX = True, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
     

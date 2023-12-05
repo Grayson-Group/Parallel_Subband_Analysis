@@ -129,7 +129,7 @@ Keeping track of data
 
 
 
-def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate = [0,0,0], ne = 4E15):
+def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate = [0,0,0], ne = 4E15, B_start = 0, B_end = -1):
 
     '''
         Vg: Gate voltage (mV) (selects file of this gate voltage)
@@ -164,7 +164,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate =
     
     
     # file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
-    # file_path = "C:\\Users\\thoma\\OneDrive\\Documents\\Research Materials\\ETH Zurich Materials\\Code with Chris\\Parallel_Subband_Analysis\\D230831B 2nd cooldown\\Full Sweeps"
+    file_path = "C:\\Users\\thoma\\OneDrive\\Documents\\Research Materials\\ETH Zurich Materials\\Code with Chris\\Parallel_Subband_Analysis\\D230831B 2nd cooldown\\Full Sweeps"
     
     if lockin2XX == False:
         file_name = "D230831B_2_"
@@ -187,6 +187,13 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate =
     D230831B_5_data = QFT.get_dat_data(file_path, file_name, ["ETH"], lockin2XX, 
                                        has_header=True, data_headings=["variable x","lockin1 x", "lockin1 y", "lockin2 x", "lockin2 y", "lockin3 x", "lockin3 y"],
                                        VoverI = (1/(I*Iscaler)))
+    
+    ### Here we filter by B field for values greater than B_start and less than B_end
+    if B_end != -1:
+        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_Field > B_start]
+        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_Field < B_end]
+    else:
+        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_Field > B_start]
 
 
     #Ignore first and last 50 data points
@@ -526,16 +533,28 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate =
         D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *c.e / c.h
 
 
-        fft_start = 10
+        fft_start = 30
         fft_cutoff = -2
-        plt.figure("FFT_XX")
-        peaks = sig.find_peaks(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), 
-                               height = 0.1*np.amax(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])))
+        plt.figure()
+        # peaks = sig.find_peaks(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), 
+        #                        height = 0.1*np.amax(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])))
         # print(peaks)
         # peak_density = D230831B_5_f_array[fft_start:fft_cutoff][indexOf(np.abs(D230831B_5_trans[fft_start:fft_cutoff]),np.amax(np.abs(D230831B_5_trans[fft_start:fft_cutoff])))]
         # print("Density n =  ",peak_density*1e-4,r" cm^-2$")
         plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
-        
+        # for peak in peaks[0]:
+        #     plt.scatter(1e-4*D230831B_5_f_array[fft_start+peak],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])[peak])
+        #     plt.annotate(np.format_float_scientific(1e-4*D230831B_5_f_array[fft_start+peak], unique = False, precision=2,exp_digits=0)+ r" cm$^{-2}$",[1.05e-4*D230831B_5_f_array[fft_start+peak],0.9e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])[peak]])
+        plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                     xy=[0.65,0.95],
+                     xycoords='axes fraction')
+        plt.annotate(text=r"$T$ = 20 mK",
+                     xy=[0.7,0.9],
+                     xycoords='axes fraction')
+        plt.ylabel(r'FFT Amplitude')
+        plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
+        plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
+        plt.xlim(0,5e11)
         
         
         
