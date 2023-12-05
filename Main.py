@@ -27,8 +27,6 @@ import Parallel_Subband_Inversion_Analysis as PSIA
     #Plot frequency of both subbands as a function of gate voltage
     
     
-
-
 ###########################
 #USE THESE PARAMETERS FOR ParallelAnalysis:
 #  I = 2e-6
@@ -36,6 +34,8 @@ import Parallel_Subband_Inversion_Analysis as PSIA
 #  Rotate = [10, 11.5, 12.1]
     
 ###########################
+
+
 
 
 
