@@ -134,7 +134,7 @@ Keeping track of data
 USE THESE PARAMETERS:
   I = 2e-6
   Iscalar = 0.97
-  Rotate = [10, 11.5, 12.1]
+  Rotate = [10, 11.5, 12.1]   ([Lockin_1 phase, Lockin_2 phase, Lockin_3 phase])
     
 ###########################
 '''
@@ -152,7 +152,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 0.97, Rotate 
                     otherwise it will grab Rxx_2 data from lockin 3.
                     NOTE: True will automatically select files with file_name ending in (_3_ or _4_) as these files all use lockin 2 for Rxx
         geo_fact: (float), geometric factor that Rxx must be scaled by to become Rho_xx
-        Rotate: (List of DEGREES with length 3), each element is a complex phase change [Rxx_1 Phase, Rxx_2 Phase, Rxy Phase]
+        Rotate: (List of DEGREES with length 3), each element is a complex phase change [Lockin_1 Phase, Lockin_2 Phase, Lockin_3 Phase]
         ne: Carrier concentration in well, assumed roughly constant across B field, used for Rho parallel calculations
     '''
     
@@ -227,9 +227,15 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 0.97, Rotate 
 
     
     ###ROTATE DATA BY USER DEFINED PHASE####
-    Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
-    Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[1])
-    Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[2])
+    
+    if lockin2XX == True:
+        Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
+        Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[1])  #Lockin 2 measures RXX
+        Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[2])
+    else:
+        Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
+        Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[2])  #Lockin 3 measures RXX
+        Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[1])
     
     
     
@@ -640,11 +646,13 @@ if __name__ == "__main__":
             rho_xy_tot = D230831B_5_data.Rxy_x[50:-50]
             rho_det_tot = rho_xy_tot**2 + rho_xx_tot**2
             # names = [('rho_xx_par_nu1','rho_xy_par_nu1')]
-            #### ne*c.e/An_Field
+            
+            
+            #### ne*c.e/An_Field     OR       nu*c.e**2/c.   #######
             
             nu = 1
             rho_xx_par_nu1 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-            rho_xy_par_nu1 = (rho_xy_tot - rho_det_tot*ne*c.e/An_Field) * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
+            rho_xy_par_nu1 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h) * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
             nu = 2
             rho_xx_par_nu2 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
             rho_xy_par_nu2 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
