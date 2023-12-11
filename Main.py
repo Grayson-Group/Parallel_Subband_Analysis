@@ -51,12 +51,12 @@ if __name__ == "__main__":
     ### Vg vals where lockin2XX should be False:
     lockin4_Vgs = [200]
 
+    Rotate_list = [10, 11.5, 12.1]
+
     if Vg_val in lockin2_Vgs:
         lockin2xx_bool = True
-        Rotate_list = [10, 11.5, 12.1]
     elif Vg_val in lockin4_Vgs:
         lockin2xx_bool = False
-        Rotate_list = [10, 12.1, 11.5]
 
     ### Run ParallelAnalysis with input Vg and neccessary lockin2xx bool and Rotate list
     

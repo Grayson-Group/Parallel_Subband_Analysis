@@ -141,7 +141,7 @@ USE THESE PARAMETERS:
 
 
 
-def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate = [0,0,0], ne = 4E15, B_start = 0, B_end = -1):
+def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15, B_start = 0, B_end = -1):
 
 
 
