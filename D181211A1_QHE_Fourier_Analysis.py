@@ -106,11 +106,13 @@ def ComplexRotate(Raw_Re, Raw_Im, phase):
     return Rot_Re, Rot_Im
     
 def RofB(R_data,B_data,B_target):
+    #Find value of R_data closest to corresponding B_target value in B_data
     min_val = np.amin(np.abs(B_data - B_target))
-    min_index = indexOf(np.abs(B_data - B_target),min_val)
+    min_index = indexOf(np.abs(B_data - B_target),min_val)  
     return R_data[min_index]
 
 def BofR(R_data,B_data,R_target):
+    #Find value of B_data closest to corresponding R_target value in R_data
     min_val = np.amin(np.abs(R_data - R_target))
     min_index = indexOf(np.abs(R_data - R_target),min_val)
     return B_data[min_index]
@@ -143,7 +145,8 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
     else:
         B_pos = np.array(data_struct.An_Field[data_struct.An_Field > 0])[chop_point:start_point]
         R_pos = np.array(R_dat[data_struct.An_Field > 0])[chop_point:start_point]
-
+        
+        
         B_0 = np.amin(B_pos)
         B_end = np.amax(B_pos)
         # print(B_0,B_end)
@@ -283,8 +286,8 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
     '''Exponential Scaling order from Coleridge = 2.5'''
     # print(B_pos[np.abs(B_pos)==np.abs(np.amin(B_pos))])
     if invert:
-        B_max = np.amax(B_pos)
-        B_min = np.amin(B_pos)
+        B_max = np.amax(B_pos)          ###NOTE TO THOMAS:
+        B_min = np.amin(B_pos)             #Aren't these if, else statements doing the same thing?
     else:
         B_min = np.amin(B_pos)
         B_max = np.amax(B_pos)

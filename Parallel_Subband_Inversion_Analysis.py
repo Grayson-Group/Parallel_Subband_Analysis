@@ -537,27 +537,33 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate 
         window_size = 4000
         print(len(D230831B_5_data.Rxx_grad))
         # window = [(300+window_size),300]
-        window = [-1,0]
+        window = [-1,0]  #Use entire range of data
         # print(len(D230831B_5_data.Rxx_x), window)
         
-
+        
+        #Take desired range of data, run preliminary data adjustments
         D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=0,background_mode="None",extra_point_inds=200, start_point=window[0],
                                                         chop_point = window[1],invert=False, show_plot=False)
+        #Invert B data, possibly apply scaling
         D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos,
                                                                                             invert=False,scaling_order=1.5,scaling_mode="None")
-        
-        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=1,show_plot=False,invert=False)
+        #If order > 0, apply some amount of Norton-Beer apodization
+        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=1,show_plot=True,invert=False)
         
         # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
+        
+        #Calculate average space between datapoints
         D230831B_5_delt_B_inv = 1/D230831B_5_B_inv[1:-1] - 1/D230831B_5_B_inv[0:-2]
         D230831B_5_delt_B_inv_av = np.mean(D230831B_5_delt_B_inv)
+        #Perform FFT, convert x_axis to carrier concentration
         n_points = 8*len(D230831B_5_R_inv)
         D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)
         D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *c.e / c.h
 
-
+        #Define section of FFT to plot
         fft_start = 30
         fft_cutoff = -2
+        
         plt.figure()
         # peaks = sig.find_peaks(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), 
         #                        height = 0.1*np.amax(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])))
