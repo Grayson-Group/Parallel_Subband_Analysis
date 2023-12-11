@@ -125,11 +125,6 @@ Keeping track of data
 '''
 
 
-
-
-
-
-def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate = [0,0,0], ne = 4E15, B_start = 0, B_end = -1):
 '''
 ###########################
 USE THESE PARAMETERS:
@@ -142,6 +137,13 @@ USE THESE PARAMETERS:
 
 
 #TO DO: Make Rotate parameter lockin-specific, NOT Rxx/Rxy specific
+
+
+
+
+def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate = [0,0,0], ne = 4E15, B_start = 0, B_end = -1):
+
+
 
 
     '''
@@ -177,8 +179,8 @@ USE THESE PARAMETERS:
     
     
     # file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
-    file_path = "C:\\Users\\thoma\\OneDrive\\Documents\\Research Materials\\ETH Zurich Materials\\Code with Chris\\Parallel_Subband_Analysis\\D230831B 2nd cooldown\\Full Sweeps"
-    #file_path = "D230831B 2nd cooldown/Full Sweeps"
+    #file_path = "C:\\Users\\thoma\\OneDrive\\Documents\\Research Materials\\ETH Zurich Materials\\Code with Chris\\Parallel_Subband_Analysis\\D230831B 2nd cooldown\\Full Sweeps"
+    file_path = "D230831B 2nd cooldown/Full Sweeps"
 
     
     if lockin2XX == False:
