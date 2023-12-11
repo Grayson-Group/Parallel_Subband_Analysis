@@ -125,6 +125,8 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
         R_dat = data_struct.Rxy_x
     elif "yx" in R_ind:
         R_dat = data_struct.Ryx_x
+    elif "xx_grad" in R_ind:
+        R_dat = data_struct.Rxx_grad
 
     # print(R_dat)
     
@@ -288,7 +290,7 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
         B_max = np.amax(B_pos)
     # print(B_min,B_pos[-1])
     
-    interp_ratio = 1
+    interp_ratio = 10
     # plt.figure()
     # plt.plot(np.linspace(1/B_max,1/B_min,interp_ratio*len(B_pos)))
     # plt.plot(B_pos)

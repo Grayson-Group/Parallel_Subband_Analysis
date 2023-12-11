@@ -129,6 +129,7 @@ Keeping track of data
 
 
 
+def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate = [0,0,0], ne = 4E15, B_start = 0, B_end = -1):
 '''
 ###########################
 USE THESE PARAMETERS:
@@ -142,7 +143,6 @@ USE THESE PARAMETERS:
 
 #TO DO: Make Rotate parameter lockin-specific, NOT Rxx/Rxy specific
 
-def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15):
 
     '''
         Vg: Gate voltage (mV) (selects file of this gate voltage)
@@ -163,9 +163,10 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate 
     
     
     PlotRAWXX = 1
-    PlotRAWXY = 1
-    PlotINVXX = 1
-    PlotINVXY = 1
+    PlotRAWXY = 0
+    PlotINVXX = 0
+    PlotINVXY = 0
+    PlotFFTXX = 1
     
     SaveRAWXX = False
     SaveRAWXY = False
@@ -175,9 +176,10 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate 
     
     
     
-    #file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
-    #file_path = "Parallel_Subband_Analysis/D230831B 2nd cooldown/Full Sweeps"
-    file_path = "D230831B 2nd cooldown/Full Sweeps"
+    # file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
+    file_path = "C:\\Users\\thoma\\OneDrive\\Documents\\Research Materials\\ETH Zurich Materials\\Code with Chris\\Parallel_Subband_Analysis\\D230831B 2nd cooldown\\Full Sweeps"
+    #file_path = "D230831B 2nd cooldown/Full Sweeps"
+
     
     if lockin2XX == False:
         file_name = "D230831B_2_"
@@ -200,6 +202,13 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate 
     D230831B_5_data = QFT.get_dat_data(file_path, file_name, ["ETH"], lockin2XX, 
                                        has_header=True, data_headings=["variable x","lockin1 x", "lockin1 y", "lockin2 x", "lockin2 y", "lockin3 x", "lockin3 y"],
                                        VoverI = (1/(I*Iscaler)))
+    
+    ### Here we filter by B field for values greater than B_start and less than B_end
+    if B_end != -1:
+        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_Field > B_start]
+        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_Field < B_end]
+    else:
+        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_Field > B_start]
 
 
     #Ignore first and last 50 data points
@@ -517,8 +526,56 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate 
                 plt.savefig("plots/INVXY_2_" + str(Vg) + ".png")
             else:
                 plt.savefig("plots/INVXY_4_" + str(Vg) + ".png")
+
+
+
+    if PlotFFTXX == 1:
+        D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x,D230831B_5_data.An_Field) # First Deriv
         
+        window_size = 4000
+        print(len(D230831B_5_data.Rxx_grad))
+        # window = [(300+window_size),300]
+        window = [-1,0]
+        # print(len(D230831B_5_data.Rxx_x), window)
         
+
+        D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=0,background_mode="None",extra_point_inds=200, start_point=window[0],
+                                                        chop_point = window[1],invert=False, show_plot=False)
+        D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos,
+                                                                                            invert=False,scaling_order=1.5,scaling_mode="None")
+        
+        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=1,show_plot=False,invert=False)
+        
+        # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
+        D230831B_5_delt_B_inv = 1/D230831B_5_B_inv[1:-1] - 1/D230831B_5_B_inv[0:-2]
+        D230831B_5_delt_B_inv_av = np.mean(D230831B_5_delt_B_inv)
+        n_points = 8*len(D230831B_5_R_inv)
+        D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)
+        D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *c.e / c.h
+
+
+        fft_start = 30
+        fft_cutoff = -2
+        plt.figure()
+        # peaks = sig.find_peaks(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), 
+        #                        height = 0.1*np.amax(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])))
+        # print(peaks)
+        # peak_density = D230831B_5_f_array[fft_start:fft_cutoff][indexOf(np.abs(D230831B_5_trans[fft_start:fft_cutoff]),np.amax(np.abs(D230831B_5_trans[fft_start:fft_cutoff])))]
+        # print("Density n =  ",peak_density*1e-4,r" cm^-2$")
+        plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
+        # for peak in peaks[0]:
+        #     plt.scatter(1e-4*D230831B_5_f_array[fft_start+peak],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])[peak])
+        #     plt.annotate(np.format_float_scientific(1e-4*D230831B_5_f_array[fft_start+peak], unique = False, precision=2,exp_digits=0)+ r" cm$^{-2}$",[1.05e-4*D230831B_5_f_array[fft_start+peak],0.9e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])[peak]])
+        plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                     xy=[0.65,0.95],
+                     xycoords='axes fraction')
+        plt.annotate(text=r"$T$ = 20 mK",
+                     xy=[0.7,0.9],
+                     xycoords='axes fraction')
+        plt.ylabel(r'FFT Amplitude')
+        plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
+        plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
+        plt.xlim(0,5e11)
         
         
         
@@ -647,9 +704,8 @@ if __name__ == "__main__":
             rho_det_tot = rho_xy_tot**2 + rho_xx_tot**2
             # names = [('rho_xx_par_nu1','rho_xy_par_nu1')]
             
-            
-            #### ne*c.e/An_Field     OR       nu*c.e**2/c.   #######
-            
+             #### ne*c.e/An_Field     OR       nu*c.e**2/c.   #######
+
             nu = 1
             rho_xx_par_nu1 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
             rho_xy_par_nu1 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h) * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
