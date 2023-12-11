@@ -99,7 +99,7 @@ def get_dat_data(file_path : str, file_name: str, R_ind : list, lockin2XX: bool,
 
 
 def ComplexRotate(Raw_Re, Raw_Im, phase):
-    Rotate = math.radians(phase)   #How much to rotate lockin1 data
+    Rotate = math.radians(phase)
     Rot_Re = Raw_Re*np.cos(Rotate) - Raw_Im*np.sin(Rotate)
     Rot_Im = Raw_Re*np.sin(Rotate) + Raw_Im*np.cos(Rotate)
     
@@ -282,7 +282,7 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
     return R_pos, B_pos
 
 
-def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_order=0):
+def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_order=0, interp_ratio=10):
     '''Exponential Scaling order from Coleridge = 2.5'''
     # print(B_pos[np.abs(B_pos)==np.abs(np.amin(B_pos))])
     if invert:
@@ -293,7 +293,6 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
         B_max = np.amax(B_pos)
     # print(B_min,B_pos[-1])
     
-    interp_ratio = 10
     # plt.figure()
     # plt.plot(np.linspace(1/B_max,1/B_min,interp_ratio*len(B_pos)))
     # plt.plot(B_pos)
@@ -313,7 +312,7 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
         # plt.figure()
         # plt.plot(np.flip(B_pos))
         # plt.plot(B_inv)
-        R_interp = np.interp(B_inv,np.flip(B_pos),np.flip(R_pos))*scaling_fun
+        R_interp = np.interp(B_inv,np.flip(B_pos), np.flip(R_pos))*scaling_fun
     else:
         # B_inv = np.flip(1/np.linspace(1/B_max,1/B_min,interp_ratio*len(B_pos)))
         R_interp = np.interp(B_inv,B_pos,R_pos)*scaling_fun

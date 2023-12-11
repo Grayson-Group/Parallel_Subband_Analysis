@@ -533,6 +533,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate 
 
     if PlotFFTXX == 1:
         D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x,D230831B_5_data.An_Field) # First Deriv
+        #plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad)
         
         window_size = 4000
         print(len(D230831B_5_data.Rxx_grad))
@@ -543,16 +544,27 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate 
         
         #Take desired range of data, run preliminary data adjustments
         D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=0,background_mode="None",extra_point_inds=200, start_point=window[0],
-                                                        chop_point = window[1],invert=False, show_plot=False)
-        #Invert B data, possibly apply scaling
-        D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos,
+                                                        chop_point = window[1],invert=False, show_plot=True)
+        
+        #Interpolate inbetween data points, possibly apply scaling
+        D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, interp_ratio=10,
                                                                                             invert=False,scaling_order=1.5,scaling_mode="None")
+        
+        
+        #plt.figure()
+        #plt.plot(D230831B_5_B_inv , D230831B_5_R_inv)
+        #plt.title("R_inv, B_inv")
+        
         #If order > 0, apply some amount of Norton-Beer apodization
         D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=1,show_plot=True,invert=False)
         
+        #plt.figure()
+        #plt.plot(D230831B_5_B_inv , D230831B_5_R_inv)
+        #plt.title("Post_apod R_inv vs B_inv")
+        
         # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
         
-        #Calculate average space between datapoints
+        #Calculate average space between 1/B datapoints
         D230831B_5_delt_B_inv = 1/D230831B_5_B_inv[1:-1] - 1/D230831B_5_B_inv[0:-2]
         D230831B_5_delt_B_inv_av = np.mean(D230831B_5_delt_B_inv)
         #Perform FFT, convert x_axis to carrier concentration

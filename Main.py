@@ -42,7 +42,7 @@ if __name__ == "__main__":
     Von_Klitz = 25812.80745
     
 
-    Vg_val = 250
+    Vg_val = 100
 
 
     ### Vg vals where lockin2XX should be True:
