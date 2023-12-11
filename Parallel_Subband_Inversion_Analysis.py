@@ -130,6 +130,19 @@ Keeping track of data
 
 
 def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate = [0,0,0], ne = 4E15, B_start = 0, B_end = -1):
+'''
+###########################
+USE THESE PARAMETERS:
+  I = 2e-6
+  Iscalar = 0.97
+  Rotate = [10, 11.5, 12.1]   ([Lockin_1 phase, Lockin_2 phase, Lockin_3 phase])
+    
+###########################
+'''
+
+
+#TO DO: Make Rotate parameter lockin-specific, NOT Rxx/Rxy specific
+
 
     '''
         Vg: Gate voltage (mV) (selects file of this gate voltage)
@@ -139,7 +152,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate =
                     otherwise it will grab Rxx_2 data from lockin 3.
                     NOTE: True will automatically select files with file_name ending in (_3_ or _4_) as these files all use lockin 2 for Rxx
         geo_fact: (float), geometric factor that Rxx must be scaled by to become Rho_xx
-        Rotate: (List of DEGREES with length 3), each element is a complex phase change [Rxx_1 Phase, Rxx_2 Phase, Rxy Phase]
+        Rotate: (List of DEGREES with length 3), each element is a complex phase change [Lockin_1 Phase, Lockin_2 Phase, Lockin_3 Phase]
         ne: Carrier concentration in well, assumed roughly constant across B field, used for Rho parallel calculations
     '''
     
@@ -165,6 +178,8 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate =
     
     # file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
     file_path = "C:\\Users\\thoma\\OneDrive\\Documents\\Research Materials\\ETH Zurich Materials\\Code with Chris\\Parallel_Subband_Analysis\\D230831B 2nd cooldown\\Full Sweeps"
+    #file_path = "D230831B 2nd cooldown/Full Sweeps"
+
     
     if lockin2XX == False:
         file_name = "D230831B_2_"
@@ -221,9 +236,15 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 1e-6, Iscaler = 1.0, Rotate =
 
     
     ###ROTATE DATA BY USER DEFINED PHASE####
-    Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
-    Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[1])
-    Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[2])
+    
+    if lockin2XX == True:
+        Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
+        Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[1])  #Lockin 2 measures RXX
+        Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[2])
+    else:
+        Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
+        Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[2])  #Lockin 3 measures RXX
+        Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[1])
     
     
     
@@ -682,9 +703,8 @@ if __name__ == "__main__":
             rho_xy_tot = D230831B_5_data.Rxy_x[50:-50]
             rho_det_tot = rho_xy_tot**2 + rho_xx_tot**2
             # names = [('rho_xx_par_nu1','rho_xy_par_nu1')]
-            #### ne*c.e/An_Field
-            #### nu*c.e**2/c.h
-
+            
+             #### ne*c.e/An_Field     OR       nu*c.e**2/c.   #######
 
             nu = 1
             rho_xx_par_nu1 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
