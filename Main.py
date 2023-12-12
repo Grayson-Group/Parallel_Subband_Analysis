@@ -26,6 +26,7 @@ import Parallel_Subband_Inversion_Analysis as PSIA
     #At low B field (shubnikov de haas) try to identify w (freq) of both subbands
     #Plot frequency of both subbands as a function of gate voltage
     
+    #Add option to FFT R_xx or R_xx2 data for any datafile
     
 ###########################
 #USE THESE PARAMETERS for ParallelAnalysis:
@@ -42,7 +43,7 @@ if __name__ == "__main__":
     Von_Klitz = 25812.80745
     
 
-    Vg_val = 100
+    Vg_val = 000
 
 
     ### Vg vals where lockin2XX should be True:
@@ -63,7 +64,7 @@ if __name__ == "__main__":
     # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
     #                                        B_start = 0, B_end = 1.5)
     inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                           B_start = 1.5, B_end = 3)
+                                           B_start = 0.1, B_end = 3.0)
     
 
     # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 000, lockin2XX = False, I = 2e-6, Iscaler = 0.9707, Rotate = [10, 12.1, 11.5], ne = 4E15)
