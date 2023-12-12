@@ -141,7 +141,7 @@ USE THESE PARAMETERS:
 
 
 
-def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15, B_start = 0, B_end = -1):
+def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15, B_start = 0, B_end = -1):
 
 
 
@@ -150,12 +150,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate 
         Vg: Gate voltage (mV) (selects file of this gate voltage)
         I: Current (Amps)
         Iscaler: Constant to multiply current by
+        Rxx_1or2: (int, 1 or 2), chooses whether to use Rxx or Rxx_2 data when performing FFT analysis
         lockin2XX: (Boolean), if True the QFT.get_dat_data function will grab Rxx_2 data from lockin 2,
                     otherwise it will grab Rxx_2 data from lockin 3.
                     NOTE: True will automatically select files with file_name ending in (_3_ or _4_) as these files all use lockin 2 for Rxx
         geo_fact: (float), geometric factor that Rxx must be scaled by to become Rho_xx
         Rotate: (List of DEGREES with length 3), each element is a complex phase change [Lockin_1 Phase, Lockin_2 Phase, Lockin_3 Phase]
         ne: Carrier concentration in well, assumed roughly constant across B field, used for Rho parallel calculations
+        B_start, B_end: (float), start and ending values (in Tesla) of B field to observe and analyse
     '''
     
     
@@ -533,10 +535,19 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, I = 2e-6, Iscaler = 0.97, Rotate 
 
     if PlotFFTXX == 1:
         #D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x,D230831B_5_data.An_Field) # First Deriv
-        D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x)
-        plt.figure()
-        plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r')
-        plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x, c = 'b')
+        if Rxx_1or2 == 1:
+            D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x)
+            
+            plt.figure()
+            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r')
+            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x, c = 'b')
+            
+        if Rxx_1or2 == 2:
+            D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x2)
+        
+            plt.figure()
+            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r')
+            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x2, c = 'b')
         
         window_size = 4000
         # window = [(300+window_size),300]

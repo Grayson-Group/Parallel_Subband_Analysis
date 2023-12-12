@@ -42,28 +42,31 @@ if __name__ == "__main__":
     
     Von_Klitz = 25812.80745
     
-
-    Vg_val = 000
-
-
-    ### Vg vals where lockin2XX should be True:
-    lockin2_Vgs = [000, 100, 250]
-
-    ### Vg vals where lockin2XX should be False:
-    lockin4_Vgs = [200]
-
+    
+    Vg_val = 200
+    Rxx = 1         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2)
     Rotate_list = [10, 11.5, 12.1]
 
+    ### Vg vals where lockin2XX should be True: 
+    lockin2_Vgs = [000, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 650]
+    ### Vg vals where lockin2XX should be False:
+    lockin4_Vgs = [000, 100, 150, 175, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 450, 500, 550, 600]
+
+     
+
+    #Handle whether lockin_2 is measuring Rxx or Rxy
     if Vg_val in lockin2_Vgs:
         lockin2xx_bool = True
     elif Vg_val in lockin4_Vgs:
         lockin2xx_bool = False
+    elif (Vg_val in lockin2_Vgs) & (Vg_val in lockin4_Vgs):
+        lockin2xx_bool = False     #Default choice of lockin2xx_bool if gate voltage occurs in both arrays
 
     ### Run ParallelAnalysis with input Vg and neccessary lockin2xx bool and Rotate list
     
     # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
     #                                        B_start = 0, B_end = 1.5)
-    inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+    inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
                                            B_start = 0.1, B_end = 3.0)
     
 
