@@ -535,19 +535,12 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
 
     if PlotFFTXX == 1:
         #D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x,D230831B_5_data.An_Field) # First Deriv
+        
+        #User defined Rxx_1or2 determines if gradient of Rxx_x or Rxx_x2 is used for FFT calculations
         if Rxx_1or2 == 1:
             D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x)
-            
-            plt.figure()
-            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r')
-            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x, c = 'b')
-            
         if Rxx_1or2 == 2:
             D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x2)
-        
-            plt.figure()
-            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r')
-            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x2, c = 'b')
         
         window_size = 4000
         # window = [(300+window_size),300]
@@ -557,22 +550,12 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         #Take desired range of data, run preliminary data adjustments
         D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=0,background_mode="None",extra_point_inds=200, start_point=window[0],
                                                         chop_point = window[1],invert=False, show_plot=True)
-        
         #Interpolate inbetween data points, possibly apply scaling
         D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, interp_ratio=10,
                                                                                          invert=False,scaling_order=1.5,scaling_mode="None")
-        
-        
-        plt.figure()
-        plt.plot(D230831B_5_B_inv , D230831B_5_R_inv)
-        plt.title("R_inv, B_inv")
-        
         #If order > 0, apply some amount of Norton-Beer apodization
         D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=1,show_plot=True,invert=False)
         
-        plt.figure()
-        plt.plot(D230831B_5_B_inv , D230831B_5_R_inv)
-        plt.title("Post_apod R_inv vs B_inv")
         
         # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
         
@@ -582,7 +565,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         
         
         #Perform FFT, convert x_axis to carrier concentration
-        n_points = 8*len(D230831B_5_R_inv)
+        n_points = 8*len(D230831B_5_R_inv)  #Add zeros to pad FFT calculation
         D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)  
         D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *c.e / c.h
 
@@ -591,6 +574,26 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         fft_start = 30
         fft_cutoff = -1
         
+        
+        #####Error checking Plots######
+        plt.figure()
+        plt.plot(D230831B_5_B_inv , D230831B_5_R_inv)
+        plt.title("Post_apod R_inv vs B_inv")
+        
+        if Rxx_1or2 == 1:
+            plt.figure()
+            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
+            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x, c = 'b', label = "R_{xx_x}")
+        if Rxx_1or2 == 2:
+            plt.figure()
+            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
+            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x2, c = 'b', label = "R_{xx_x}")
+        plt.title("Raw Rxx and Gradient of Rxx VS B")
+        plt.legend()
+            
+        
+        
+        ####MAIN FFT PLOT######
         plt.figure()
         # peaks = sig.find_peaks(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), 
         #                        height = 0.1*np.amax(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])))

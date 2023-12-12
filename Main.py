@@ -60,7 +60,7 @@ if __name__ == "__main__":
     elif Vg_val in lockin4_Vgs:
         lockin2xx_bool = False
     elif (Vg_val in lockin2_Vgs) & (Vg_val in lockin4_Vgs):
-        lockin2xx_bool = False     #Default choice of lockin2xx_bool if gate voltage occurs in both arrays
+        lockin2xx_bool = True     #Default choice of lockin2xx_bool if gate voltage occurs in both arrays
 
     ### Run ParallelAnalysis with input Vg and neccessary lockin2xx bool and Rotate list
     
