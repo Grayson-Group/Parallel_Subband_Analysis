@@ -580,6 +580,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         plt.plot(D230831B_5_B_inv , D230831B_5_R_inv)
         plt.title("Post_apod R_inv vs B_inv")
         
+        
         if Rxx_1or2 == 1:
             plt.figure()
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
@@ -617,7 +618,24 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         
         
         
-    return inv, nu_bounds
+        #CREATE FFT DATAFRAME
+        FFT = 0
+        FFT = pd.DataFrame({'Trans':    D230831B_5_trans,
+                            'f_array':  D230831B_5_f_array})
+        
+        
+        #Gradient Dataframe
+        Rxx_grad = 0
+        Rxx_grad = pd.DataFrame({'B_field': D230831B_5_B_inv,
+                            'Rxx_grad': D230831B_5_R_inv})
+        Rxx_grad.sort_values(by='B_field',inplace=True,ignore_index=True)
+    
+      
+    if PlotFFTXX == 0:
+        FFT = 0                 #Need to return something
+        Rxx_grad = 0
+        
+    return inv, FFT, Rxx_grad, nu_bounds
 
 def get_closests(df, col, val):
     '''

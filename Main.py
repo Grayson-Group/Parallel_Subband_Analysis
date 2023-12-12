@@ -66,22 +66,21 @@ if __name__ == "__main__":
     
     # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
     #                                        B_start = 0, B_end = 1.5)
-    inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+    inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
                                            B_start = 0.1, B_end = 3.0)
     
+    #TO DO: Add contour plot function when an array of gate voltages is passed
+        #Note: Should probably add all important FFT data to the inv dataframe, since that is returned to Main.py
+    if 1 == 1:
+        print("hi")
+        plt.figure()
+        plt.title("TEST")
+        plt.plot(1e-4*FFT.f_array, 1e-6*np.abs(FFT.Trans))
+        plt.xlim(0,5e11)
 
-    # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 000, lockin2XX = False, I = 2e-6, Iscaler = 0.9707, Rotate = [10, 12.1, 11.5], ne = 4E15)
-    # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 100, lockin2XX = True, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
-    # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = 200, lockin2XX = False, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
-    
-    # inv2, nu_bounds2 = PSIA.ParallelAnalysis(Vg = 100, lockin2XX = True, I = 2e-6, Iscaler = 0.9701, Rotate = [10, 11.5, 12.1], ne = 4E15)
+        
     
     plt.show()
-    
-    # new_bounds = PSIA.scaling(inv, inv2, 0.3, nu_bounds[1], False)
-    
-    
-    #plt.plot(inv2.B_field[new_bounds[0]:new_bounds[1]], inv2.Rxx[new_bounds[0]:new_bounds[1]])
     
     
     
