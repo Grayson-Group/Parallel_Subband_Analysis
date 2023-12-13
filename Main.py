@@ -43,40 +43,47 @@ if __name__ == "__main__":
     Von_Klitz = 25812.80745
     
     
-    Vg_val = 200
-    Rxx = 1         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2)
+    Vg_val = 650
+    Rxx = 2         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2)
     Rotate_list = [10, 11.5, 12.1]
 
     ### Vg vals where lockin2XX should be True: 
-    lockin2_Vgs = [000, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 650]
+    lockin4_Vgs = [000, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 650]
     ### Vg vals where lockin2XX should be False:
-    lockin4_Vgs = [000, 100, 150, 175, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 450, 500, 550, 600]
+    lockin2_Vgs = [000, 100, 150, 175, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 450, 500, 550, 600]
 
      
 
     #Handle whether lockin_2 is measuring Rxx or Rxy
-    if Vg_val in lockin2_Vgs:
-        lockin2xx_bool = True
+    if (Vg_val in lockin2_Vgs) & (Vg_val in lockin4_Vgs):
+        lockin2xx_bool = True    #User defined default choice of lockin2xx_bool if gate voltage occurs in both arrays
     elif Vg_val in lockin4_Vgs:
-        lockin2xx_bool = False
-    elif (Vg_val in lockin2_Vgs) & (Vg_val in lockin4_Vgs):
-        lockin2xx_bool = True     #Default choice of lockin2xx_bool if gate voltage occurs in both arrays
+        lockin2xx_bool = True       #If Vg_val only occurs in lockin2_Vgs, then lockin2 measures Rxx
+    elif Vg_val in lockin2_Vgs:
+        lockin2xx_bool = False      #If Vg_val only occurs in lockin2_Vgs, then lockin3 measures Rxx
+    
 
-    ### Run ParallelAnalysis with input Vg and neccessary lockin2xx bool and Rotate list
+    #### Run ParallelAnalysis with input Vg and neccessary lockin2xx bool and Rotate list  ####
     
     # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
     #                                        B_start = 0, B_end = 1.5)
     inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                           B_start = 0.1, B_end = 3.0)
+                                           B_start = 0.1, B_end = -1)
     
     #TO DO: Add contour plot function when an array of gate voltages is passed
         #Note: Should probably add all important FFT data to the inv dataframe, since that is returned to Main.py
-    if 1 == 1:
-        print("hi")
-        plt.figure()
-        plt.title("TEST")
-        plt.plot(1e-4*FFT.f_array, 1e-6*np.abs(FFT.Trans))
-        plt.xlim(0,5e11)
+    if 1 == 0:
+        for GV in Vg_val:
+            print("hi")
+            #trans = 
+            inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+                                                    B_start = 0.1, B_end = 3.0)
+                
+
+            plt.figure()
+            plt.title("TEST")
+            plt.plot(1e-4*FFT.f_array, 1e-6*np.abs(FFT.Trans))
+            plt.xlim(0,3e11)
 
         
     

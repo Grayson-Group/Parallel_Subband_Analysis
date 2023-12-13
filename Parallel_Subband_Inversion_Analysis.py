@@ -167,15 +167,16 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
     
     
     PlotRAWXX = 1
-    PlotRAWXY = 0
+    PlotRAWXY = 1
     PlotINVXX = 0
     PlotINVXY = 0
-    PlotFFTXX = 1
+    PlotFFTXX = 0
     
-    SaveRAWXX = False
-    SaveRAWXY = False
-    SaveINVXX = False
-    SaveINVXY = False
+    SaveRAWXX = 1
+    SaveRAWXY = 1
+    SaveINVXX = 0
+    SaveINVXY = 0
+    SaveFFTXX = 0
     
     
     
@@ -419,8 +420,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         
         if SaveRAWXX == True:
             if lockin2XX == False:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 3",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
                 plt.savefig("plots/RAWXX_2_" + str(Vg) + ".png")
             else:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 2",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
                 plt.savefig("plots/RAWXX_4_" + str(Vg) + ".png")
             
     
@@ -448,8 +455,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         
         if SaveRAWXY == True:
             if lockin2XX == False:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 3",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
                 plt.savefig("plots/RAWXY_2_" + str(Vg) + ".png")
             else:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 2",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
                 plt.savefig("plots/RAWXY_4_" + str(Vg) + ".png")
 
 
@@ -487,8 +500,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
     
         if SaveINVXX == True:
             if lockin2XX == False:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 3",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
                 plt.savefig("plots/INVXX_2_" + str(Vg) + ".png")
             else:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 2",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
                 plt.savefig("plots/INVXX_4_" + str(Vg) + ".png")
     
     
@@ -527,8 +546,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         
         if SaveINVXY == True:
             if lockin2XX == False:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 3",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
                 plt.savefig("plots/INVXY_2_" + str(Vg) + ".png")
             else:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 2",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
                 plt.savefig("plots/INVXY_4_" + str(Vg) + ".png")
 
 
@@ -588,7 +613,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         if Rxx_1or2 == 2:
             plt.figure()
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
-            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x2, c = 'b', label = "R_{xx_x}")
+            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x2, c = 'b', label = "R_{xx_x2}")
         plt.title("Raw Rxx and Gradient of Rxx VS B")
         plt.legend()
             
@@ -616,6 +641,18 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
         plt.xlim(0,5e11)
         
+
+        if SaveFFTXX == True:
+            if lockin2XX == False:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 3",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
+                plt.savefig("plots/FFTXX_2_" + str(Vg) + ".png")
+            else:
+                plt.annotate(text=r"$Rxx2$ from Lock-In 2",
+                     xy=[0.05,0.9],
+                     xycoords='axes fraction')
+                plt.savefig("plots/FFTXX_4_" + str(Vg) + ".png")
         
         
         #CREATE FFT DATAFRAME
@@ -632,8 +669,9 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
     
       
     if PlotFFTXX == 0:
-        FFT = 0                 #Need to return something
-        Rxx_grad = 0
+        FFT = None                 #Need to return something
+        Rxx_grad = None
+        
         
     return inv, FFT, Rxx_grad, nu_bounds
 
