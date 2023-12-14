@@ -40,7 +40,7 @@ if __name__ == "__main__":
     Von_Klitz = 25812.80745
     
     
-    Vg_val = 000  #GATE VALUE(s) THAT YOU WANT TO ANALYSE
+    Vg_val = 000                  #GATE VALUE(s) THAT YOU WANT TO ANALYSE
                         #Should be an int that is an element of lockin4_Vgs or lockin2_Vgs
                         #OR it can be a list of int which are elements of lockin4_Vgs or lockin2_Vgs
 
@@ -105,8 +105,12 @@ if __name__ == "__main__":
         plt.xlim([0,5e11])
         plt.xlabel("Carrier Concentration $(cm^{-2})$")
         plt.ylabel("Gate Volage $(mV)$")
+        plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(np.round(np.min(inv.B_field), 1), unique = False, precision=1)+ r" T, "+np.format_float_positional(np.round(np.max(inv.B_field), 1), unique = False, precision=1)+r"T]",
+                     xy=[0.65,0.95],
+                     xycoords='axes fraction')
         plt.title("Gate Voltage, 1/B FFT, and FFT intensity ")
 
+        
         
     
     plt.show()

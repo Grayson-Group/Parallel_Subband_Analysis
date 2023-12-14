@@ -559,21 +559,16 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
 
 
     if PlotFFTXX == 1:
-        #D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x,D230831B_5_data.An_Field) # First Deriv
-        
         #User defined Rxx_1or2 determines if gradient of Rxx_x or Rxx_x2 is used for FFT calculations
         
-        #####NOTE: possible issue is B field is non-monotonic due to repeated B field at B = 1T or 5T.
         if Rxx_1or2 == 1:
-            #D230831B_5_data["Rxx_grad_B"] = np.gradient(D230831B_5_data.Rxx_x)
             D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x, D230831B_5_data.An_Field)
         if Rxx_1or2 == 2:
-            #D230831B_5_data["Rxx_grad_B"] = np.gradient(D230831B_5_data.Rxx_x2)
             D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x2, D230831B_5_data.An_Field)
         
-        window_size = 4000
-        # window = [(300+window_size),300]
-        window = [-1,0]  #Use entire range of data
+        #window_size = 4000
+        #window = [(300+window_size),300]
+        window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
         
         
         #Take desired range of data, run preliminary data adjustments
@@ -647,6 +642,24 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
         plt.xlim(0,5e11)
         
+
+        ###TESTING, remove spikes from FFT, then inverse FFT to figure out source of noise
+        if 1 == 1:
+            plt.figure()
+            region = [[275, 325], [550,650], [850, 950]]
+            new_t = np.ones(len(D230831B_5_trans))
+            for reg in region[:]:
+                new_t[reg[0]:reg[1]] -= 1
+                plt.plot(1e-4*D230831B_5_f_array[reg[0]:reg[1]],1e-6*np.abs(D230831B_5_trans[reg[0]:reg[1]]), linestyle = '--', c = 'r')
+            print(new_t)
+            new_t = new_t * D230831B_5_trans
+            plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(new_t[fft_start:fft_cutoff]))
+            plt.xlim([0,5e11])
+
+
+            #NOW: Inverse rFFT new_t with x axis as D230831B_5_f_array[fft_start:fft_cutoff]
+            yeet = ft.irfft(new_t, len(new_t))
+
 
         if SaveFFTXX == True:
             if lockin2XX == False:
