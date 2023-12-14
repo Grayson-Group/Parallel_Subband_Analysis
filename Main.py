@@ -22,55 +22,7 @@ import Parallel_Subband_Inversion_Analysis as PSIA
 
 ######
 #TO DO:
-    #Plot all gate voltages as 1/B
-    #At low B field (shubnikov de haas) try to identify w (freq) of both subbands
-    #Plot frequency of both subbands as a function of gate voltage
-    
-    #Add option to FFT R_xx or R_xx2 data for any datafile
-    
-###########################
-#USE THESE PARAMETERS for ParallelAnalysis:
-#  I = 2e-6
-#  Iscalar = 0.97
-#  Rotate = [10, 11.5, 12.1]
-#    
-###########################
-
-
-
-if __name__ == "__main__":
-    
-    Von_Klitz = 25812.80745
-    
-    
-    Vg_val = 600
-    Rxx = 1         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2)
-    Rotate_list = [10, 11.5, 12.1]
-
-    ### Vg vals where lockin2XX should be True: 
-    lockin4_Vgs = [000, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 650]
-    ### Vg vals where lockin2XX should be False:
-    lockin2_Vgs = [000, 100, 150, 175, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 450, 500, 550, 600]
-
-     
-
-    #Handle whether lockin_2 is measuring Rxx or Rxy
-    if (Vg_val in lockin2_Vgs) & (Vg_val in lockin4_Vgs):
-        lockin2xx_bool = False    #User defined default choice of lockin2xx_bool if gate voltage occurs in both arrays
-    elif Vg_val in lockin4_Vgs:
-        lockin2xx_bool = True       #If Vg_val only occurs in lockin2_Vgs, then lockin2 measures Rxx
-    elif Vg_val in lockin2_Vgs:
-        lockin2xx_bool = False      #If Vg_val only occurs in lockin2_Vgs, then lockin3 measures Rxx
-    
-
-    #### Run ParallelAnalysis with input Vg and neccessary lockin2xx bool and Rotate list  ####
-    
-    # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-    #                                        B_start = 0, B_end = 1.5)
-    inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                           B_start = 0.1, B_end = 1.5)
-    
-    #TO DO: Add contour plot function when an array of gate voltages is passed
+    #Add contour plot function when an array of gate voltages is passed
     #NOTE: Least blind interpolation TO DO: Interpolate so that all data is equally spaced in B
         #Note: Should probably add all important FFT data to the inv dataframe, since that is returned to Main.py
     #Check to see if there is any offset of B = 0 (see symmetric B field sweep graph)
@@ -81,56 +33,79 @@ if __name__ == "__main__":
 
     #Fourier transform raw 1/B data, delete peaks in FFT, then inverse fourier transform the remaining noise
     #to determine what features are causing this nosie.
-    if 1 == 0:
+
+
+if __name__ == "__main__":
+    
+    Von_Klitz = 25812.80745
+    
+    
+    Vg_val = 000  #GATE VALUE(s) THAT YOU WANT TO ANALYSE
+                        #Should be an int that is an element of lockin4_Vgs or lockin2_Vgs
+                        #OR it can be a list of int which are elements of lockin4_Vgs or lockin2_Vgs
+
+    Rxx = 1         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
+    Rotate_list = [10, 11.5, 12.1]
+
+    ### Vg vals where lockin2XX should be True: 
+    lockin4_Vgs = [000, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 650]
+    ### Vg vals where lockin2XX should be False:
+    lockin2_Vgs = [000, 100, 150, 175, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 450, 500, 550, 600]
+
+
+    if type(Vg_val) == int:
+    #### Run ParallelAnalysis with single input Vg_val ####    
+
+        lockin2xx_bool = QFT.determine_Rxx_lockin(gate_val = Vg_val, default_bool = True)  #Determine if lockin2 measures Rxx or Rxy  
+            #default_bool = True will default grab data files ending in "_4_" as these files have lockin2 measuring Rxx
+            #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
+             
+        inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+                                            B_start = 0.1, B_end = 1.5)
+    
+
+
+    if type(Vg_val) == list:
+        #Vg_val is an array of gate voltages
+        #### Run ParallelAnalysis once for each value in Vg_val, create a contour plot  ####
+        
+        
         i = 0
-        f_data = np.zeros([len(Vg_val), 1])
-        spect_data = np.zeros([len(Vg_val), 1])
 
         for GV in Vg_val:
-            print(GV)
-
-
-            #Handle whether lockin_2 is measuring Rxx or Rxy
-            if (GV in lockin2_Vgs) & (GV in lockin4_Vgs):
-                lockin2xx_bool = False    #User defined default choice of lockin2xx_bool if gate voltage occurs in both arrays
-            elif GV in lockin4_Vgs:
-                lockin2xx_bool = True       #If Vg_val only occurs in lockin2_Vgs, then lockin2 measures Rxx
-            elif GV in lockin2_Vgs:
-                lockin2xx_bool = False      #If Vg_val only occurs in lockin2_Vgs, then lockin3 measures Rxx
             
-            #trans = 
+            lockin2xx_bool = QFT.determine_Rxx_lockin(gate_val = GV, default_bool = True)
+                #default_bool = True will default grab data files ending in "_4_" as these files have lockin2 measuring Rxx
+                #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
+                
             inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = GV, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
                                                     B_start = 0.1, B_end = 3.0)
 
 
-            fft_start = 0#3520
-            fft_cutoff = -1#-3520
+
+            #TO DO: Add fft_start and fft_cutoff parameters to only FFT a given slice of data
+            #fft_start = 0
+            #fft_cutoff = -1
+            
             if i == 0:
-                R_data = np.empty((len(GV),len(inv.An_Field)))
-                spect_data = np.empty((len(GV),len(FFT.f_array)))
-                B_data = np.empty(len(inv.An_Field))
-                R_data[i,:] = D230831B_6_data.Rxx_x#/np.max(D230831B_6_data.Rxx_x)
-                B_data = inv.An_Field
+                R_data = np.empty((len(Vg_val),len(inv.B_field)))
+                spect_data = np.empty((len(Vg_val),len(FFT.f_array)))
+                B_data = np.empty(len(inv.B_field))
+                R_data[i,:] = inv.Rxx#/np.max(D230831B_6_data.Rxx_x)
+                B_data = inv.B_field
                 f_data = FFT.f_array
                 spect_data[i,:] = np.abs(FFT.Trans)/np.amax(np.abs(FFT.Trans))
             else: 
-                R_data[i,:] = np.interp(B_data[:],inv.An_Field,D230831B_6_data.Rxx_x)
+                R_data[i,:] = np.interp(B_data[:],inv.B_field, inv.Rxx)
                 spect_data[i,:] = np.interp(f_data[:],FFT.f_array,np.abs(FFT.Trans)/np.amax(np.abs(FFT.Trans)))
             i+= 1
 
-
-            
-            f_data[i] = FFT["f_array"].values
-            spect_data[i] = FFT["Trans"].values
-
-            #x = f_data
-            #y = gate voltages
-            #z = spect_data (trans)
-
-
-        #plt.contourf(1e-4*f_data,  Vg_vals, np.abs(spect_data),levels=level_array)
+        plt.figure()
         plt.contourf(1e-4*f_data,  Vg_val, np.abs(spect_data))
-        plt.title("TEST")
+        plt.xlim([0,5e11])
+        plt.xlabel("Carrier Concentration $(cm^{-2})$")
+        plt.ylabel("Gate Volage $(mV)$")
+        plt.title("Gate Voltage, 1/B FFT, and FFT intensity ")
 
         
     

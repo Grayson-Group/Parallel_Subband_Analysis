@@ -97,6 +97,29 @@ def get_dat_data(file_path : str, file_name: str, R_ind : list, lockin2XX: bool,
         
     return data
 
+def determine_Rxx_lockin(gate_val: int, default_bool: bool):
+    '''
+    Given a user defined gate value "gate_val", determine whether this gate value corresponds to a datafile
+    where Rxx2 is measured by Lockin 2 or 3
+    
+    If the gate value occurs in both arrays, "lockin2xx_bool" will be set to user defined "default_bool"
+    '''
+
+    ### Gate vals where lockin2XX can be True: 
+    lockin4_Vgs = [000, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 650]
+    ### Gate vals where lockin2XX can be False:
+    lockin2_Vgs = [000, 100, 150, 175, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 450, 500, 550, 600]
+
+
+    #Handle whether lockin_2 is measuring Rxx or Rxy
+    if (gate_val in lockin2_Vgs) & (gate_val in lockin4_Vgs):
+        lockin2xx_bool = default_bool    #User defined default choice of lockin2xx_bool if gate voltage occurs in both arrays
+    elif gate_val in lockin4_Vgs:
+        lockin2xx_bool = True       #If gate_val only occurs in lockin2_Vgs, then lockin2 measures Rxx
+    elif gate_val in lockin2_Vgs:
+        lockin2xx_bool = False      #If gate_val only occurs in lockin2_Vgs, then lockin3 measures Rxx
+
+    return lockin2xx_bool
 
 def ComplexRotate(Raw_Re, Raw_Im, phase):
     Rotate = math.radians(phase)
