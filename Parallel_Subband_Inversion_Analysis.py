@@ -170,10 +170,10 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
     PlotRAWXY = 1
     PlotINVXX = 0
     PlotINVXY = 0
-    PlotFFTXX = 0
+    PlotFFTXX = 1
     
-    SaveRAWXX = 1
-    SaveRAWXY = 1
+    SaveRAWXX = 0
+    SaveRAWXY = 0
     SaveINVXX = 0
     SaveINVXY = 0
     SaveFFTXX = 0
@@ -562,10 +562,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         #D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x,D230831B_5_data.An_Field) # First Deriv
         
         #User defined Rxx_1or2 determines if gradient of Rxx_x or Rxx_x2 is used for FFT calculations
+        
+        #####NOTE: possible issue is B field is non-monotonic due to repeated B field at B = 1T or 5T.
         if Rxx_1or2 == 1:
-            D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x)
+            #D230831B_5_data["Rxx_grad_B"] = np.gradient(D230831B_5_data.Rxx_x)
+            D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x, D230831B_5_data.An_Field)
         if Rxx_1or2 == 2:
-            D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x2)
+            #D230831B_5_data["Rxx_grad_B"] = np.gradient(D230831B_5_data.Rxx_x2)
+            D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x2, D230831B_5_data.An_Field)
         
         window_size = 4000
         # window = [(300+window_size),300]
@@ -579,7 +583,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, interp_ratio=10,
                                                                                          invert=False,scaling_order=1.5,scaling_mode="None")
         #If order > 0, apply some amount of Norton-Beer apodization
-        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=1,show_plot=True,invert=False)
+        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=3,show_plot=True,invert=False)
         
         
         # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
@@ -609,10 +613,12 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         if Rxx_1or2 == 1:
             plt.figure()
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
+            #plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad_B, c = 'g', label = "Grad_B")
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x, c = 'b', label = "R_{xx_x}")
         if Rxx_1or2 == 2:
             plt.figure()
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
+            #plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad_B, c = 'g', label = "Grad_B")
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x2, c = 'b', label = "R_{xx_x2}")
         plt.title("Raw Rxx and Gradient of Rxx VS B")
         plt.legend()

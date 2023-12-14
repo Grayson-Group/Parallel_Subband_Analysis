@@ -43,8 +43,8 @@ if __name__ == "__main__":
     Von_Klitz = 25812.80745
     
     
-    Vg_val = 650
-    Rxx = 2         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2)
+    Vg_val = 600
+    Rxx = 1         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2)
     Rotate_list = [10, 11.5, 12.1]
 
     ### Vg vals where lockin2XX should be True: 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     #Handle whether lockin_2 is measuring Rxx or Rxy
     if (Vg_val in lockin2_Vgs) & (Vg_val in lockin4_Vgs):
-        lockin2xx_bool = True    #User defined default choice of lockin2xx_bool if gate voltage occurs in both arrays
+        lockin2xx_bool = False    #User defined default choice of lockin2xx_bool if gate voltage occurs in both arrays
     elif Vg_val in lockin4_Vgs:
         lockin2xx_bool = True       #If Vg_val only occurs in lockin2_Vgs, then lockin2 measures Rxx
     elif Vg_val in lockin2_Vgs:
@@ -68,22 +68,69 @@ if __name__ == "__main__":
     # inv, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
     #                                        B_start = 0, B_end = 1.5)
     inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                           B_start = 0.1, B_end = -1)
+                                           B_start = 0.1, B_end = 1.5)
     
     #TO DO: Add contour plot function when an array of gate voltages is passed
+    #NOTE: Least blind interpolation TO DO: Interpolate so that all data is equally spaced in B
         #Note: Should probably add all important FFT data to the inv dataframe, since that is returned to Main.py
-    if 1 == 0:
-        for GV in Vg_val:
-            print("hi")
-            #trans = 
-            inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                                    B_start = 0.1, B_end = 3.0)
-                
+    #Check to see if there is any offset of B = 0 (see symmetric B field sweep graph)
+        #Artifically shift all data by some amount delta B (NOT 1/B), can we cause oscillations to become better/worse?
+        #This would be caused by some background polarization of magnet when zero current is incident
+        #Plot -B and +B data on top of each other from Christian data to determine B offset
 
-            plt.figure()
-            plt.title("TEST")
-            plt.plot(1e-4*FFT.f_array, 1e-6*np.abs(FFT.Trans))
-            plt.xlim(0,3e11)
+
+    #Fourier transform raw 1/B data, delete peaks in FFT, then inverse fourier transform the remaining noise
+    #to determine what features are causing this nosie.
+    if 1 == 0:
+        i = 0
+        f_data = np.zeros([len(Vg_val), 1])
+        spect_data = np.zeros([len(Vg_val), 1])
+
+        for GV in Vg_val:
+            print(GV)
+
+
+            #Handle whether lockin_2 is measuring Rxx or Rxy
+            if (GV in lockin2_Vgs) & (GV in lockin4_Vgs):
+                lockin2xx_bool = False    #User defined default choice of lockin2xx_bool if gate voltage occurs in both arrays
+            elif GV in lockin4_Vgs:
+                lockin2xx_bool = True       #If Vg_val only occurs in lockin2_Vgs, then lockin2 measures Rxx
+            elif GV in lockin2_Vgs:
+                lockin2xx_bool = False      #If Vg_val only occurs in lockin2_Vgs, then lockin3 measures Rxx
+            
+            #trans = 
+            inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = GV, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+                                                    B_start = 0.1, B_end = 3.0)
+
+
+            fft_start = 0#3520
+            fft_cutoff = -1#-3520
+            if i == 0:
+                R_data = np.empty((len(GV),len(inv.An_Field)))
+                spect_data = np.empty((len(GV),len(FFT.f_array)))
+                B_data = np.empty(len(inv.An_Field))
+                R_data[i,:] = D230831B_6_data.Rxx_x#/np.max(D230831B_6_data.Rxx_x)
+                B_data = inv.An_Field
+                f_data = FFT.f_array
+                spect_data[i,:] = np.abs(FFT.Trans)/np.amax(np.abs(FFT.Trans))
+            else: 
+                R_data[i,:] = np.interp(B_data[:],inv.An_Field,D230831B_6_data.Rxx_x)
+                spect_data[i,:] = np.interp(f_data[:],FFT.f_array,np.abs(FFT.Trans)/np.amax(np.abs(FFT.Trans)))
+            i+= 1
+
+
+            
+            f_data[i] = FFT["f_array"].values
+            spect_data[i] = FFT["Trans"].values
+
+            #x = f_data
+            #y = gate voltages
+            #z = spect_data (trans)
+
+
+        #plt.contourf(1e-4*f_data,  Vg_vals, np.abs(spect_data),levels=level_array)
+        plt.contourf(1e-4*f_data,  Vg_val, np.abs(spect_data))
+        plt.title("TEST")
 
         
     
@@ -112,6 +159,3 @@ if __name__ == "__main__":
     print(plateau_3 - (Von_Klitz/3))
     print(plateau_4 - (Von_Klitz/4))
     '''
-    
-    
-    
