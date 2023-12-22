@@ -141,7 +141,8 @@ USE THESE PARAMETERS:
 
 
 
-def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15, B_start = 0, B_end = -1):
+def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int, 
+                     I = 2e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15, B_start = 0, B_end = -1):
 
 
 
@@ -158,6 +159,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         Rotate: (List of DEGREES with length 3), each element is a complex phase change [Lockin_1 Phase, Lockin_2 Phase, Lockin_3 Phase]
         ne: Carrier concentration in well, assumed roughly constant across B field, used for Rho parallel calculations
         B_start, B_end: (float), start and ending values (in Tesla) of B field to observe and analyse
+        gradient: (Boolean), determines if gradient of Rxx or raw Rxx should be used when calculating FFT
     '''
     
     
@@ -567,26 +569,39 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
 
 
     if PlotFFTXX == 1:
-        #User defined Rxx_1or2 determines if gradient of Rxx_x or Rxx_x2 is used for FFT calculations
-        
-        if Rxx_1or2 == 1:
-            D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x, D230831B_5_data.An_Field)
-        if Rxx_1or2 == 2:
-            D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x2, D230831B_5_data.An_Field)
-        
-        #window_size = 4000
-        #window = [(300+window_size),300]
-        window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
-        
-        
-        #Take desired range of data, run preliminary data adjustments
-        D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=0,background_mode="None",extra_point_inds=200, start_point=window[0],
+        #User defined Rxx_1or2 determines if Rxx_x or Rxx_x2 is used for FFT calculations
+        if gradient == True:
+            if Rxx_1or2 == 1:
+                D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x, D230831B_5_data.An_Field)
+            if Rxx_1or2 == 2:
+                D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x2, D230831B_5_data.An_Field)
+
+
+            window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
+            
+            #Take desired range of data, run preliminary data adjustments
+            D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=1, background_mode="points",extra_point_inds=200, start_point=window[0],
+                                                            chop_point = window[1], invert=False, show_plot=True)
+
+
+        if gradient == False:
+            window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
+            
+            if Rxx_1or2 == 1:
+                D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx"], order=1, background_mode="points",extra_point_inds=200, start_point=window[0],
                                                         chop_point = window[1], invert=False, show_plot=True)
+            if Rxx_1or2 == 2:
+                D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx2"], order=1, background_mode="points",extra_point_inds=200, start_point=window[0],
+                                                        chop_point = window[1], invert=False, show_plot=True)
+            
+
+
+
         #Interpolate inbetween data points, possibly apply scaling
         D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, interp_ratio=10,
                                                                                         invert=False,scaling_order=1.5,scaling_mode="None")
         #If order > 0, apply some amount of Norton-Beer apodization
-        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=0,show_plot=True,invert=False)
+        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv, D230831B_5_B_inv, order=3, show_plot=True, invert=False)
         
         
         # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
@@ -616,20 +631,18 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         plt.ylabel("Gradient of Rxx")
         plt.title("Grad. of Rxx vs 1/B")
         
-        
+        '''
         if Rxx_1or2 == 1:
             plt.figure()
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
-            #plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad_B, c = 'g', label = "Grad_B")
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x, c = 'b', label = "R_{xx_x}")
         if Rxx_1or2 == 2:
             plt.figure()
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
-            #plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad_B, c = 'g', label = "Grad_B")
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x2, c = 'b', label = "R_{xx_x2}")
         plt.title("Raw Rxx and Gradient of Rxx VS B")
         plt.legend()
-            
+        '''    
         
         
         ####MAIN FFT PLOT######

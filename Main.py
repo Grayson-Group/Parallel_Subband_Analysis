@@ -54,7 +54,9 @@ if __name__ == "__main__":
                         #Should be an int that is an element of lockin4_Vgs or lockin2_Vgs
                         #OR it can be a list of int which are elements of lockin4_Vgs or lockin2_Vgs
 
-    Rxx = 1         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
+    Rxx = 2         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
+    grad = True    ###If true, FFT will be calculated using DERIVATIVE of Rxx vs. 1/B. If false use raw Rxx vs. 1/B
+    
     Rotate_list = [10, 11.5, 12.1]
 
     ### Vg vals where lockin2XX should be True: 
@@ -70,7 +72,7 @@ if __name__ == "__main__":
             #default_bool = True will default grab data files ending in "_4_" as these files have lockin2 measuring Rxx
             #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
              
-        inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+        inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, gradient = grad, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
                                             B_start = 0.1, B_end = 0.51)
     
 

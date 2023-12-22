@@ -144,6 +144,8 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
 
     if "xx" in R_ind:
         R_dat = data_struct.Rxx_x
+    elif "xx2" in R_ind:
+        R_dat = data_struct.Rxx_x2
     elif "yy" in R_ind:
         R_dat = data_struct.Ryy_x
     elif "xy" in R_ind:
