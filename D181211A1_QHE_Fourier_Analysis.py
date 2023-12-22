@@ -204,6 +204,49 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
         # R_pos -= 0.9*lin_fit[0]*(B_pos-B_0)
         R_pos -= back_fun
 
+
+
+    if background_mode=="edge_avg":
+        #Take average of gradient Rxx data in the regions [0:inner_index[0]] and [inner_index[1]:-1] in 1/B
+        #Subtract line connecting both averages 
+        inner_index = [19, -120]
+
+        right_avg = np.average(R_pos[:inner_index[0]])     #Right and left are flipped in 1/B
+        left_avg = np.average(R_pos[inner_index[1]:])
+        
+        slope = (right_avg - left_avg)/((1/(B_pos[0])) - (1/(B_pos[-1])))
+        print(slope)
+
+        lin_fit = slope*(1/B_pos) + left_avg
+        post_sub = R_pos - lin_fit
+
+        if show_plot:
+            plt.figure()
+            plt.title("Gradient of Rxx VS 1/B")
+            plt.plot(1/B_pos, R_pos)
+            plt.plot((1/B_pos[:inner_index[0]]), R_pos[:inner_index[0]], 'g', label = "Averaging Areas") #"Right side" averaging range in 1/B
+            plt.plot((1/B_pos[inner_index[1]:]), R_pos[inner_index[1]:], 'g') #"Left side" averaging range in 1/B
+            plt.plot(1/B_pos, lin_fit, 'r--', label = "Linear fit")
+            plt.xlabel("1/B $(T^{-1})$")
+            plt.ylabel("Rxx Gradient")
+            plt.legend()
+            plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(np.round(np.min(B_pos), 1), unique = False, precision=1)+ r" T, "+np.format_float_positional(np.round(np.max(B_pos), 1), unique = False, precision=1)+r"T]",
+                     xy=[0.65,0.95],
+                     xycoords='axes fraction')
+            
+
+
+            plt.figure()
+            plt.title("Post-Linear Fit Subtraction")
+            plt.plot(1/B_pos, post_sub)
+            plt.xlabel("1/B $(T^{-1})$")
+            plt.ylabel("Rxx Gradient")
+            plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(np.round(np.min(B_pos), 1), unique = False, precision=1)+ r" T, "+np.format_float_positional(np.round(np.max(B_pos), 1), unique = False, precision=1)+r"T]",
+                     xy=[0.65,0.95],
+                     xycoords='axes fraction')
+
+        R_pos = post_sub
+
     if background_mode=="points":
             
         if order == 0:
@@ -351,7 +394,7 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
 def apod_NB(R_inv,B_inv,order=0,show_plot=False,invert=False):
 
     if order == 0:
-        return R_inv, B_inv
+        return R_inv
 
     if order == 1: # Norton-Beer Weak Apodization
 

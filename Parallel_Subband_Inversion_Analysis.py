@@ -403,7 +403,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         #plt.ylim([0, 10])
         plt.plot(inv.B_field,inv.Rxx, c = 'b', label = "Rxx")
         #plt.plot(inv.B_field, inv.Rxx_y, c = 'b')
-        plt.plot(inv.B_field, inv.Rxx2, c = 'orange',label = "Rxx_2")
+        #plt.plot(inv.B_field, inv.Rxx2, c = 'orange',label = "Rxx_2")
         #plt.plot(inv.B_field, inv.Rxx2_y, c = 'orange')
         #plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
         #plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
@@ -415,6 +415,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         # plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
         plt.ylabel("$R_{xx} (\Omega)$")
         plt.xlabel("B (T)")
+        plt.grid()
+        plt.legend()
+
+        plt.figure("RAWXX_InvB")
+        plt.plot(1/(inv.B_field),inv.Rxx, c = 'b', label = "Rxx")
+        plt.title("RAWXX VS 1/B, Vg = " + str(Vg) + "mV")
+        plt.ylabel("$R_{xx} (\Omega)$")
+        plt.xlabel("1/B $(T^{-1})$")
         plt.grid()
         plt.legend()
         
@@ -573,12 +581,12 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         
         #Take desired range of data, run preliminary data adjustments
         D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=0,background_mode="None",extra_point_inds=200, start_point=window[0],
-                                                        chop_point = window[1],invert=False, show_plot=True)
+                                                        chop_point = window[1], invert=False, show_plot=True)
         #Interpolate inbetween data points, possibly apply scaling
         D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, interp_ratio=10,
-                                                                                         invert=False,scaling_order=1.5,scaling_mode="None")
+                                                                                        invert=False,scaling_order=1.5,scaling_mode="None")
         #If order > 0, apply some amount of Norton-Beer apodization
-        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=3,show_plot=True,invert=False)
+        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv,D230831B_5_B_inv,order=0,show_plot=True,invert=False)
         
         
         # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
@@ -589,7 +597,9 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         
         
         #Perform FFT, convert x_axis to carrier concentration
-        n_points = 8*len(D230831B_5_R_inv)  #Add zeros to pad FFT calculation
+        padding = 8    #Factor of zeros to pad the FFT to increase 
+        n_points = padding*len(D230831B_5_R_inv)  #Add zeros to pad FFT calculation
+        #n_points = 1*len(D230831B_5_R_inv)  #Add zeros to pad FFT calculation
         D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)  
         D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *c.e / c.h
 
@@ -601,8 +611,10 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         
         #####Error checking Plots######
         plt.figure()
-        plt.plot(D230831B_5_B_inv , D230831B_5_R_inv)
-        plt.title("Post_apod R_inv vs B_inv")
+        plt.plot(1/D230831B_5_B_inv , D230831B_5_R_inv)
+        plt.xlabel("1/B $(T^{-1})$")
+        plt.ylabel("Gradient of Rxx")
+        plt.title("Grad. of Rxx vs 1/B")
         
         
         if Rxx_1or2 == 1:
@@ -646,19 +658,38 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, Rxx_1or2: int, I = 2e-6, Iscaler 
         ###TESTING, remove spikes from FFT, then inverse FFT to figure out source of noise
         if 1 == 1:
             plt.figure()
-            region = [[275, 325], [550,650], [850, 950]]
+            region = [[120, 165], [255,315], [390, 450], [550,600]]  #Define regions of data to remove
+
+            #use new_t array to copy all FFT data, but replace defined regions with zeros
             new_t = np.ones(len(D230831B_5_trans))
             for reg in region[:]:
                 new_t[reg[0]:reg[1]] -= 1
                 plt.plot(1e-4*D230831B_5_f_array[reg[0]:reg[1]],1e-6*np.abs(D230831B_5_trans[reg[0]:reg[1]]), linestyle = '--', c = 'r')
-            print(new_t)
             new_t = new_t * D230831B_5_trans
             plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(new_t[fft_start:fft_cutoff]))
             plt.xlim([0,5e11])
-
+            plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
+            plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                     xy=[0.65,0.8],
+                     xycoords='axes fraction')
+            plt.ylabel(r'FFT Amplitude')
+            plt.legend(["Removed Data"])
+            plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
 
             #NOW: Inverse rFFT new_t with x axis as D230831B_5_f_array[fft_start:fft_cutoff]
-            yeet = ft.irfft(new_t, len(new_t))
+            #yeet = ft.irfft(D230831B_5_trans, int(len(D230831B_5_B_inv)))
+
+            inverted_trans = ft.irfft(new_t)
+            #inverted_trans = ft.irfft(D230831B_5_trans)
+
+            plt.figure()
+            plt.title("Inverted FFT with peaks removed")
+            plt.xlabel("1/B $(T^{-1})$")
+            plt.ylabel("Grad. of Rxx")
+            plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                     xy=[0.65,0.95],
+                     xycoords='axes fraction')
+            plt.plot(1/D230831B_5_B_inv, inverted_trans[:int(len(inverted_trans)/padding)])
 
 
         if SaveFFTXX == True:

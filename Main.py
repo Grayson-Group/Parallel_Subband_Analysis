@@ -35,6 +35,16 @@ import Parallel_Subband_Inversion_Analysis as PSIA
     #to determine what features are causing this nosie.
 
 
+
+    #All in 1/B, post derivative data
+    #average value of derivative might not be zero
+    #Take left side and right side, estimate average on each side, 
+
+    #Take average of integer number of oscillations on left or right
+    #Subtract away a line connecting these two averages
+    #DO THIS BEFORE APODIZATION
+    #(See line 212 in QFT)
+
 if __name__ == "__main__":
     
     Von_Klitz = 25812.80745
@@ -61,7 +71,7 @@ if __name__ == "__main__":
             #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
              
         inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                            B_start = 0.1, B_end = 1.5)
+                                            B_start = 0.1, B_end = 0.51)
     
 
 
