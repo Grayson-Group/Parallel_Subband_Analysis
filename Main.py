@@ -45,6 +45,21 @@ import Parallel_Subband_Inversion_Analysis as PSIA
     #DO THIS BEFORE APODIZATION
     #(See line 212 in QFT)
 
+
+    ###TO DO:  Plot real and imaginary part of FFT, not just amplitude
+
+
+'''
+###########################
+USE THESE PARAMETERS:
+  I = 2e-6
+  Iscalar = 0.97
+  Rotate = [10, 11.5, 12.1]   ([Lockin_1 phase, Lockin_2 phase, Lockin_3 phase])
+    
+###########################
+'''
+
+
 if __name__ == "__main__":
     
     Von_Klitz = 25812.80745
@@ -55,7 +70,7 @@ if __name__ == "__main__":
                         #OR it can be a list of int which are elements of lockin4_Vgs or lockin2_Vgs
 
     Rxx = 2         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
-    grad = True    ###If true, FFT will be calculated using DERIVATIVE of Rxx vs. 1/B. If false use raw Rxx vs. 1/B
+    grad = False    ###If true, FFT will be calculated using DERIVATIVE of Rxx vs. 1/B. If false use raw Rxx vs. 1/B
     
     Rotate_list = [10, 11.5, 12.1]
 

@@ -136,9 +136,6 @@ USE THESE PARAMETERS:
 '''
 
 
-#TO DO: Make Rotate parameter lockin-specific, NOT Rxx/Rxy specific
-
-
 
 
 def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int, 
@@ -174,13 +171,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
     PlotINVXY = 0
     PlotFFTXX = 1
     
+
     SaveRAWXX = 0
     SaveRAWXY = 0
     SaveINVXX = 0
     SaveINVXY = 0
     SaveFFTXX = 0
     
-    
+    RemoveFFTSpikes = 0  ###User defines regions of FFT to remove, then FFT is inverted back to resistance vs. 1/B data
     
     
     file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
@@ -603,33 +601,46 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
         #If order > 0, apply some amount of Norton-Beer apodization
         D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv, D230831B_5_B_inv, order=3, show_plot=True, invert=False)
         
-        
+
+            #Error checking if data points are evenly spaced in 1/B
+        print(len(D230831B_5_B_inv))
+        a = 0
+        for n in D230831B_5_B_inv:
+            if a == 0:
+                print("skip")
+                a+=1
+                n_prev = n
+            else:
+                print(n - n_prev)
+                n_prev = n
+
+
+                #####Error checking Plots######
+        plt.figure()
+        plt.plot(1/D230831B_5_B_inv , D230831B_5_R_inv)
+        plt.xlabel("1/B $(T^{-1})$")
+        plt.ylabel("Gradient of Rxx")
+        if gradient == True:
+            plt.ylabel("Deriv. of Rxx")
+            plt.title("Post-Processing Derivative of Rxx vs 1/B")
+        else:
+            plt.ylabel("Rxx")
+            plt.title("Post-Processing Rxx vs 1/B")
+
         # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
         
+
         #Calculate average space between 1/B datapoints
         D230831B_5_delt_B_inv = 1/D230831B_5_B_inv[1:-1] - 1/D230831B_5_B_inv[0:-2]
         D230831B_5_delt_B_inv_av = np.mean(D230831B_5_delt_B_inv)
         
         
         #Perform FFT, convert x_axis to carrier concentration
-        padding = 8    #Factor of zeros to pad the FFT to increase 
-        n_points = padding*len(D230831B_5_R_inv)  #Add zeros to pad FFT calculation
-        #n_points = 1*len(D230831B_5_R_inv)  #Add zeros to pad FFT calculation
+        n_points = 2**13  ###n_points should be = a POWER OF 2
         D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)  
         D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *c.e / c.h
 
 
-        #Define section of FFT to plot
-        fft_start = 30
-        fft_cutoff = -1
-        
-        
-        #####Error checking Plots######
-        plt.figure()
-        plt.plot(1/D230831B_5_B_inv , D230831B_5_R_inv)
-        plt.xlabel("1/B $(T^{-1})$")
-        plt.ylabel("Gradient of Rxx")
-        plt.title("Grad. of Rxx vs 1/B")
         
         '''
         if Rxx_1or2 == 1:
@@ -640,12 +651,17 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
             plt.figure()
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
             plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x2, c = 'b', label = "R_{xx_x2}")
-        plt.title("Raw Rxx and Gradient of Rxx VS B")
+        plt.title("Raw Rxx and Derivative of Rxx VS B")
         plt.legend()
         '''    
         
         
         ####MAIN FFT PLOT######
+
+        #Define section of FFT to plot
+        fft_start = 1
+        fft_cutoff = -1
+        
         plt.figure()
         # peaks = sig.find_peaks(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), 
         #                        height = 0.1*np.amax(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])))
@@ -669,12 +685,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
         
 
         ###TESTING, remove spikes from FFT, then inverse FFT to figure out source of noise
-        if 1 == 1:
-            plt.figure()
+        if RemoveFFTSpikes == 1:
+            
             region = [[120, 165], [255,315], [390, 450], [550,600]]  #Define regions of data to remove
+
 
             #use new_t array to copy all FFT data, but replace defined regions with zeros
             new_t = np.ones(len(D230831B_5_trans))
+            plt.figure()
             for reg in region[:]:
                 new_t[reg[0]:reg[1]] -= 1
                 plt.plot(1e-4*D230831B_5_f_array[reg[0]:reg[1]],1e-6*np.abs(D230831B_5_trans[reg[0]:reg[1]]), linestyle = '--', c = 'r')
@@ -702,7 +720,8 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
             plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
                      xy=[0.65,0.95],
                      xycoords='axes fraction')
-            plt.plot(1/D230831B_5_B_inv, inverted_trans[:int(len(inverted_trans)/padding)])
+            #plt.plot(1/D230831B_5_B_inv, inverted_trans[:int(len(inverted_trans)/padding)])
+            plt.plot(1/D230831B_5_B_inv, inverted_trans[:len(D230831B_5_R_inv)])
 
 
         if SaveFFTXX == True:
