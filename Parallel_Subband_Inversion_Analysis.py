@@ -659,7 +659,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
         ####MAIN FFT PLOT######
 
         #Define section of FFT to plot
-        fft_start = 1
+        fft_start = 30
         fft_cutoff = -1
         
         plt.figure()
@@ -668,7 +668,13 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
         # print(peaks)
         # peak_density = D230831B_5_f_array[fft_start:fft_cutoff][indexOf(np.abs(D230831B_5_trans[fft_start:fft_cutoff]),np.amax(np.abs(D230831B_5_trans[fft_start:fft_cutoff])))]
         # print("Density n =  ",peak_density*1e-4,r" cm^-2$")
-        plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
+        
+        
+        #plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
+        plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
+        plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
+        plt.legend(loc = "lower right")
+        
         # for peak in peaks[0]:
         #     plt.scatter(1e-4*D230831B_5_f_array[fft_start+peak],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])[peak])
         #     plt.annotate(np.format_float_scientific(1e-4*D230831B_5_f_array[fft_start+peak], unique = False, precision=2,exp_digits=0)+ r" cm$^{-2}$",[1.05e-4*D230831B_5_f_array[fft_start+peak],0.9e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])[peak]])

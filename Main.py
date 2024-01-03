@@ -88,7 +88,7 @@ if __name__ == "__main__":
             #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
              
         inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, gradient = grad, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                            B_start = 0.1, B_end = 0.51)
+                                            B_start = 0.1, B_end = 0.515)
     
 
 
