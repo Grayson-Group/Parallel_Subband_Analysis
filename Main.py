@@ -64,33 +64,53 @@ if __name__ == "__main__":
     
     Von_Klitz = 25812.80745
     
-    
-    Vg_val = 000                  #GATE VALUE(s) THAT YOU WANT TO ANALYSE
+##################################################################################    
+                                  #GATE VALUE(s) THAT YOU WANT TO ANALYSE
                         #Should be an int that is an element of lockin4_Vgs or lockin2_Vgs
                         #OR it can be a list of int which are elements of lockin4_Vgs or lockin2_Vgs
+                        #OR it can be a string for specialized data files
+    Vg_val = 000                   
+    #Vg_val = "D230831B_4_Last_"                       
+#                                   List of Specialized Data File Vg_val
+                        #D230831B_3_Contacts_000mV_Vg.dat                  Vg_val = "D230831B_3_Contacts_"
+                        #D230831B_4_LowField_000mV_Vg.dat                  Vg_val = "D230831B_4_LowField_"
+                        #D230831B_4_Last_000mV_Vg.dat                      Vg_val = "D230831B_4_Last_"
+                        #D230831B_4_Negative_200mV_Vg.dat                  Vg_val = "D230831B_4_Negative_"
+                        ####NOTE: All specialized data files have lockin2xx_bool == True
 
-    Rxx = 2         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
+
+    Rxx = 1         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
     grad = False    ###If true, FFT will be calculated using DERIVATIVE of Rxx vs. 1/B. If false use raw Rxx vs. 1/B
     
+###################################################################################    
+    
     Rotate_list = [10, 11.5, 12.1]
+
+
 
     ### Vg vals where lockin2XX should be True: 
     lockin4_Vgs = [000, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 650]
     ### Vg vals where lockin2XX should be False:
     lockin2_Vgs = [000, 100, 150, 175, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 450, 500, 550, 600]
 
-
-    if type(Vg_val) == int:
-    #### Run ParallelAnalysis with single input Vg_val ####    
-
-        lockin2xx_bool = QFT.determine_Rxx_lockin(gate_val = Vg_val, default_bool = True)  #Determine if lockin2 measures Rxx or Rxy  
-            #default_bool = True will default grab data files ending in "_4_" as these files have lockin2 measuring Rxx
-            #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
-             
-        inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, gradient = grad, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                            B_start = 0.1, B_end = 0.515)
     
 
+
+
+    if type(Vg_val) == int or type(Vg_val) == str:
+    #### Run ParallelAnalysis with single input Vg_val ####    
+        
+        if type(Vg_val) == str:
+            lockin2xx_bool = True
+        
+        if type(Vg_val) == int:
+            lockin2xx_bool = QFT.determine_Rxx_lockin(gate_val = Vg_val, default_bool = True)  #Determine if lockin2 measures Rxx or Rxy  
+                #default_bool = True will default grab data files ending in "_4_" as these files have lockin2 measuring Rxx
+                #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
+             
+        inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, gradient = grad, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+                                            B_start = 0.1, B_end = 0.51)
+            
 
     if type(Vg_val) == list:
         #Vg_val is an array of gate voltages

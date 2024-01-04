@@ -364,7 +364,8 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
     # plt.figure()
     # plt.plot(np.linspace(1/B_max,1/B_min,interp_ratio*len(B_pos)))
     # plt.plot(B_pos)
-    B_inv = 1/np.linspace(1/B_max,1/B_min,np.round(interp_ratio*len(B_pos)))
+    #B_inv = 1/np.linspace(1/B_max,1/B_min,np.round(interp_ratio*len(B_pos)))
+    OneOver_B_inv = np.linspace(1/B_max,1/B_min,np.round(interp_ratio*len(B_pos)))
     if scaling_mode == "linear":
         scaling_fun = 1/np.abs(B_inv)**scaling_order
     
@@ -380,11 +381,14 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
         # plt.figure()
         # plt.plot(np.flip(B_pos))
         # plt.plot(B_inv)
-        R_interp = np.interp(B_inv,np.flip(B_pos), np.flip(R_pos))*scaling_fun
+        #R_interp = np.interp(B_inv, np.flip(B_pos), np.flip(R_pos))*scaling_fun
+        R_interp = np.interp(OneOver_B_inv, np.flip(1/B_pos), np.flip(R_pos))*scaling_fun
     else:
         # B_inv = np.flip(1/np.linspace(1/B_max,1/B_min,interp_ratio*len(B_pos)))
-        R_interp = np.interp(B_inv,B_pos,R_pos)*scaling_fun
-
+        #R_interp = np.interp(B_inv,B_pos,R_pos)*scaling_fun
+        R_interp = np.interp(OneOver_B_inv, np.flip((1/B_pos)), np.flip((R_pos)))*scaling_fun
+    
+    B_inv = 1/OneOver_B_inv
     # plt.figure()
     # plt.scatter(1/B_inv,R_interp)
 

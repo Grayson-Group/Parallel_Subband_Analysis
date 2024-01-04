@@ -138,7 +138,7 @@ USE THESE PARAMETERS:
 
 
 
-def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int, 
+def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                      I = 2e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15, B_start = 0, B_end = -1):
 
 
@@ -199,8 +199,24 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
         #file_name = "D230831B_4_Last_"       #For final 0meV low B field run
         #file_name = "D230831B_4_Negative_"   #For -200mV gate run
         
-        file_name = file_name + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
         geo_fact = (0.5/1.325)
+        
+        if type(Vg) == int:
+            file_name = file_name + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
+            
+        
+        if type(Vg) == str:    
+            if Vg in ["D230831B_3_Contacts_", "D230831B_4_LowField_", "D230831B_4_Last_"]:
+                file_name = Vg
+                file_name = file_name + np.format_float_positional(000,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
+                Vg = 000
+            elif Vg == "D230831B_4_Negative_":
+                file_name = Vg
+                file_name = file_name + np.format_float_positional(200,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
+                Vg = -200
+            else:
+                raise NameError('No usuable Vg_val detected')
+            
         
         
     
@@ -599,13 +615,13 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
         D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, interp_ratio=10,
                                                                                         invert=False,scaling_order=1.5,scaling_mode="None")
         #If order > 0, apply some amount of Norton-Beer apodization
-        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv, D230831B_5_B_inv, order=3, show_plot=True, invert=False)
-        
-
+        D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv, D230831B_5_B_inv, order=0, show_plot=True, invert=False)
+            
+        '''
             #Error checking if data points are evenly spaced in 1/B
-        print(len(D230831B_5_B_inv))
+        print(len(1/D230831B_5_B_inv))
         a = 0
-        for n in D230831B_5_B_inv:
+        for n in 1/D230831B_5_B_inv:
             if a == 0:
                 print("skip")
                 a+=1
@@ -613,7 +629,7 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
             else:
                 print(n - n_prev)
                 n_prev = n
-
+        '''
 
                 #####Error checking Plots######
         plt.figure()
@@ -636,10 +652,14 @@ def ParallelAnalysis(Vg: int, lockin2XX: bool, gradient: bool, Rxx_1or2: int,
         
         
         #Perform FFT, convert x_axis to carrier concentration
-        n_points = 2**13  ###n_points should be = a POWER OF 2
+        power = 13
+        n_points = 2**power  ###n_points should be = a POWER OF 2
         D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)  
         D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *c.e / c.h
-
+        
+        print("Interpolation Ratio: " + str(len(D230831B_5_B_inv)/len(D230831B_5_B_pos)))
+        print("# of data points used for FFT: 2^" + str(power))
+        print("Ratio of padded zeros to data: " + str(n_points/len(D230831B_5_B_inv)))
 
         
         '''
