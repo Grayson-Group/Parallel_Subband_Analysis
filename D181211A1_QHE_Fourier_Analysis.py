@@ -366,6 +366,7 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
     # plt.plot(B_pos)
     #B_inv = 1/np.linspace(1/B_max,1/B_min,np.round(interp_ratio*len(B_pos)))
     OneOver_B_inv = np.linspace(1/B_max,1/B_min,np.round(interp_ratio*len(B_pos)))
+    B_inv = 1/OneOver_B_inv
     if scaling_mode == "linear":
         scaling_fun = 1/np.abs(B_inv)**scaling_order
     

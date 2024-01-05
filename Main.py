@@ -71,7 +71,7 @@ if __name__ == "__main__":
                         #OR it can be a string for specialized data files
     Vg_val = 000                   
     #Vg_val = "D230831B_4_Last_"                       
-#                                   List of Specialized Data File Vg_val
+#                                   List of Specialized Data Files 
                         #D230831B_3_Contacts_000mV_Vg.dat                  Vg_val = "D230831B_3_Contacts_"
                         #D230831B_4_LowField_000mV_Vg.dat                  Vg_val = "D230831B_4_LowField_"
                         #D230831B_4_Last_000mV_Vg.dat                      Vg_val = "D230831B_4_Last_"
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                         ####NOTE: All specialized data files have lockin2xx_bool == True
 
 
-    Rxx = 1         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
+    Rxx = 2         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
     grad = False    ###If true, FFT will be calculated using DERIVATIVE of Rxx vs. 1/B. If false use raw Rxx vs. 1/B
     
 ###################################################################################    
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     #### Run ParallelAnalysis with single input Vg_val ####    
         
         if type(Vg_val) == str:
-            lockin2xx_bool = True
+            lockin2xx_bool = True   #All specialty files use lockin 2 to measure Rxx
         
         if type(Vg_val) == int:
             lockin2xx_bool = QFT.determine_Rxx_lockin(gate_val = Vg_val, default_bool = True)  #Determine if lockin2 measures Rxx or Rxy  
@@ -110,6 +110,7 @@ if __name__ == "__main__":
              
         inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, gradient = grad, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
                                             B_start = 0.1, B_end = 0.51)
+        #0.457
             
 
     if type(Vg_val) == list:
