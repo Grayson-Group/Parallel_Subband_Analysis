@@ -350,7 +350,7 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
     return R_pos, B_pos
 
 
-def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_order=0, interp_ratio=10):
+def interpolate_data(R_pos,B_pos, invert=True, pad_zeros=False, scaling_mode="linear", scaling_order=0, interp_ratio=10):
     '''Exponential Scaling order from Coleridge = 2.5'''
     # print(B_pos[np.abs(B_pos)==np.abs(np.amin(B_pos))])
     if invert:
@@ -367,6 +367,8 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
     #B_inv = 1/np.linspace(1/B_max,1/B_min,np.round(interp_ratio*len(B_pos)))
     OneOver_B_inv = np.linspace(1/B_max,1/B_min,np.round(interp_ratio*len(B_pos)))
     B_inv = 1/OneOver_B_inv
+    
+    
     if scaling_mode == "linear":
         scaling_fun = 1/np.abs(B_inv)**scaling_order
     
@@ -389,7 +391,23 @@ def interpolate_data(R_pos,B_pos, invert=True, scaling_mode="linear", scaling_or
         #R_interp = np.interp(B_inv,B_pos,R_pos)*scaling_fun
         R_interp = np.interp(OneOver_B_inv, np.flip((1/B_pos)), np.flip((R_pos)))*scaling_fun
     
-    B_inv = 1/OneOver_B_inv
+    
+    if pad_zeros == True:
+        #Extrapolate OneOver_B_inv to 0T with even spacing
+        #Pad OneOver_R_inv data with zeros down to 0T to match spacing of OneOver_B_inv
+        spacing = np.round(OneOver_B_inv[1] - OneOver_B_inv[0], 5)
+        num_spacing = int(np.round(OneOver_B_inv[0]/spacing))
+        new_B = np.linspace(0 + spacing, OneOver_B_inv[0]-spacing, num_spacing - 1)
+        added_length = len(new_B)
+        new_B = np.append(new_B, OneOver_B_inv)
+        OneOver_B_inv = new_B
+        
+        zeros = np.zeros(added_length)
+        R_interp = np.append(zeros, R_interp)
+        
+        B_inv = 1/OneOver_B_inv
+
+        
     # plt.figure()
     # plt.scatter(1/B_inv,R_interp)
 

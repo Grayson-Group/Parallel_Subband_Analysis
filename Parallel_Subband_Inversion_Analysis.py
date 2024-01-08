@@ -683,14 +683,34 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             plt.title("Smoothed Inverse FFT Results")
             plt.xlabel("B (T)")
             plt.ylabel("Rxx (Ohms)")
-
+            
+            
+            #Rename data, remove added padded data
+            cutoff = np.where(interp_B < D230831B_5_B_pos[0])
+            D230831B_5_B_pos = interp_B[cutoff[0][-1]:]
+            D230831B_5_R_pos = inverted_trans[cutoff[0][-1]:len(interp_B)]
 
         #Interpolate inbetween data points, possibly apply scaling
-        D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, interp_ratio=10,
-                                                                                        invert=False,scaling_order=1.5,scaling_mode="None")
+        D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, pad_zeros= False, interp_ratio=10,
+                                                                                        invert=False, scaling_order=1.5, scaling_mode="None")
         #If order > 0, apply some amount of Norton-Beer apodization
         D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv, D230831B_5_B_inv, order=3, show_plot=True, invert=False)
-            
+        
+        
+        ####PAD ZEROS TO 0T^-1 
+        OneOver_B_inv = 1/D230831B_5_B_inv
+        
+        spacing = np.round(OneOver_B_inv[1] - OneOver_B_inv[0], 5)
+        num_spacing = int(np.round(OneOver_B_inv[0]/spacing))
+        new_B = np.linspace(0 + spacing, OneOver_B_inv[0]-spacing, num_spacing - 1)
+        added_length = len(new_B)
+        new_B = np.append(new_B, OneOver_B_inv)
+        OneOver_B_inv = new_B
+        
+        zeros = np.zeros(added_length)
+        D230831B_5_R_inv = np.append(zeros, D230831B_5_R_inv)
+        
+        D230831B_5_B_inv = 1/OneOver_B_inv
         
 
                 #####Error checking Plots######
@@ -714,7 +734,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         
         
         #Perform FFT, convert x_axis to carrier concentration
-        power = 13
+        power = 17
         n_points = 2**power  ###n_points should be = a POWER OF 2
         D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)  
         D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *2*c.e / c.h  #Factor of 2 if FFT is of spin degenerate region
@@ -769,7 +789,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         plt.ylabel(r'FFT Amplitude')
         plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
         plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
-        plt.xlim(0,5e11)
+        #plt.xlim(0,5e11)
         
 
         ###TESTING, remove spikes from FFT, then inverse FFT to figure out source of noise
