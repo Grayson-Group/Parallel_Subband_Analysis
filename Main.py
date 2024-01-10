@@ -23,30 +23,14 @@ import Parallel_Subband_Inversion_Analysis as PSIA
 ######
 #TO DO:
     #Add contour plot function when an array of gate voltages is passed
-    #NOTE: Least blind interpolation TO DO: Interpolate so that all data is equally spaced in B
-        #Note: Should probably add all important FFT data to the inv dataframe, since that is returned to Main.py
     #Check to see if there is any offset of B = 0 (see symmetric B field sweep graph)
         #Artifically shift all data by some amount delta B (NOT 1/B), can we cause oscillations to become better/worse?
         #This would be caused by some background polarization of magnet when zero current is incident
         #Plot -B and +B data on top of each other from Christian data to determine B offset
 
 
-    #Fourier transform raw 1/B data, delete peaks in FFT, then inverse fourier transform the remaining noise
-    #to determine what features are causing this nosie.
-
-
-
-    #All in 1/B, post derivative data
-    #average value of derivative might not be zero
-    #Take left side and right side, estimate average on each side, 
-
-    #Take average of integer number of oscillations on left or right
-    #Subtract away a line connecting these two averages
-    #DO THIS BEFORE APODIZATION
-    #(See line 212 in QFT)
-
-
-    ###TO DO:  Plot real and imaginary part of FFT, not just amplitude
+    #######FIX _3 CONTACT PLOT
+    #They are all differ Rxx configurations, need to label plots as such
 
 
 '''
@@ -110,7 +94,6 @@ if __name__ == "__main__":
              
         inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, gradient = grad, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
                                             B_start = 0.1, B_end = 0.52)
-        #0.457
             
 
     if type(Vg_val) == list:

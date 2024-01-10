@@ -145,24 +145,22 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
 
 
     '''
-        Vg: Gate voltage (mV) (selects file of this gate voltage)
-        I: Current (Amps)
-        Iscaler: Constant to multiply current by
-        Rxx_1or2: (int, 1 or 2), chooses whether to use Rxx or Rxx_2 data when performing FFT analysis
         lockin2XX: (Boolean), if True the QFT.get_dat_data function will grab Rxx_2 data from lockin 2,
                     otherwise it will grab Rxx_2 data from lockin 3.
                     NOTE: True will automatically select files with file_name ending in (_3_ or _4_) as these files all use lockin 2 for Rxx
-        geo_fact: (float), geometric factor that Rxx must be scaled by to become Rho_xx
+        gradient: (Boolean), determines if gradient of Rxx or raw Rxx should be used when calculating FFT
+        Rxx_1or2: (int, 1 or 2), chooses whether to use Rxx or Rxx_2 data when performing FFT analysis
+        Vg: Gate voltage (mV) (selects file of this gate voltage)
+        I: Current (Amps)
+        Iscaler: Constant to multiply current 
         Rotate: (List of DEGREES with length 3), each element is a complex phase change [Lockin_1 Phase, Lockin_2 Phase, Lockin_3 Phase]
         ne: Carrier concentration in well, assumed roughly constant across B field, used for Rho parallel calculations
         B_start, B_end: (float), start and ending values (in Tesla) of B field to observe and analyse
-        gradient: (Boolean), determines if gradient of Rxx or raw Rxx should be used when calculating FFT
     '''
     
     
     
-    #######FIX _3 CONTACT PLOT
-    #They are all differ Rxx configurations, need to label plots as such
+   
     
     
     PlotRAWXX = 1
@@ -179,7 +177,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     SaveFFTXX = 0
     
     
-    smoothing = 1        ###Option to smooth jaggady low B data before performing FFT
+    smoothing = 0        ###Option to smooth jaggady low B data before performing FFT
     RemoveFFTSpikes = 0  ###User defines regions of FFT to remove, then FFT is inverted back to resistance vs. 1/B data
     
     
@@ -191,22 +189,22 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     if lockin2XX == False:
         file_name = "D230831B_2_"
         file_name = file_name + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
-        geo_fact = (0.5/2.65)
+        geo_fact = (0.5/2.65)  #Scalar to convert R to Resistivity
     
     if lockin2XX == True:
-        file_name = "D230831B_4_"            #Use for almost all full sweeps
+        file_name = "D230831B_4_"            #Used for almost all full sweeps
         
-        #file_name =  "D230831B_3_Contacts_"   #For Contact comparison _3 sweep
+        #file_name =  "D230831B_3_Contacts_"     #For Contact comparison _3 sweep
         #file_name = "D230831B_4_LowField_"      #For initial 0meV low B field run
-        #file_name = "D230831B_4_Last_"       #For final 0meV low B field run
-        #file_name = "D230831B_4_Negative_"   #For -200mV gate run
+        #file_name = "D230831B_4_Last_"          #For final 0meV low B field run
+        #file_name = "D230831B_4_Negative_"      #For -200mV gate run
         
-        geo_fact = (0.5/1.325)
+        geo_fact = (0.5/1.325)  #Scalar to convert R to Resistivity
         
+        
+        #Automatically determine correct filename
         if type(Vg) == int:
             file_name = file_name + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
-            
-        
         if type(Vg) == str:    
             if Vg in ["D230831B_3_Contacts_", "D230831B_4_LowField_", "D230831B_4_Last_"]:
                 file_name = Vg
@@ -221,7 +219,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             
         
         
-    
+    #Grab dataframe using filename
     D230831B_5_data = QFT.get_dat_data(file_path, file_name, ["ETH"], lockin2XX, 
                                        has_header=True, data_headings=["variable x","lockin1 x", "lockin1 y", "lockin2 x", "lockin2 y", "lockin3 x", "lockin3 y"],
                                        VoverI = (1/(I*Iscaler)))
@@ -598,7 +596,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             #Take desired range of data, run preliminary data adjustments
             D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=1, background_mode="points",extra_point_inds=200, start_point=window[0],
                                                             chop_point = window[1], invert=False, show_plot=True)
-
+            
 
         if gradient == False:
             window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
@@ -637,26 +635,21 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             
             
             #Perform FFT, convert x_axis to carrier concentration
-            power = 13
-            n_points = 2**power  ###n_points should be = a POWER OF 2
-            D230831B_5_trans = ft.rfft(new_R,n=n_points)
-                                       #NOTE: len(D230831B_5_trans) ~= (n_points / 2)
-            D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / (n_points * np.abs(spacing)) *2*c.e / c.h
-                #These results are basically junk, the results are a frequency breakdown of Rxx vs B, where frequency is 1/B
-                #We are just doing this FFT so we can mechanically alter the FFT results and invert them, smoothing the resulting inverted data
-                #By padding end of data with zeros, you are telling the FFT program that there are no high frequency components to our Rxx data
-                #This forces all data to be smooth, effectively replacing jaggedy triangle Rxx data at low B with smooth oscillations
-                
-            print("Ratio of padded zeros to data: " + str(n_points/len(new_B)))
-            
+          
+            D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(D230831B_5_B_pos, new_R, 13)
+            #These results are basically junk, the results are a frequency components of Rxx vs B, where frequency is 1/B
+            #We are just doing this FFT so we can mechanically alter the FFT results and invert them, smoothing the resulting inverted data
+            #By padding end of data with zeros, you are telling the FFT program that there are no high frequency components to our Rxx data
+            #This forces all data to be smooth, effectively replacing jaggedy triangle Rxx data at low B with smooth oscillations
+         
             fft_start = 30
             fft_cutoff = -1
             
             
-            #Plot results, multiply by scalers to convert m to cm
+            #Plot results, multiply by scalers to convert m to cm,  
             plt.figure()
-            plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
-            plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
+            plt.plot(D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
+            plt.plot(D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
             plt.legend(loc = "lower right")
             
             plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
@@ -666,20 +659,15 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                          xy=[0.7,0.9],
                          xycoords='axes fraction')
             plt.ylabel(r'FFT Amplitude')
-            plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
-            plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
+            plt.xlabel("1/B ($^{-T}$)")
+            plt.title(r'FFT of Rxx vs B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
             #plt.xlim(0,5e11)
             
             scaling = 10
             new_t = np.append(D230831B_5_trans, np.zeros(len(D230831B_5_trans)*scaling))
             print(new_t)
             inverted_trans = ft.irfft(new_t)
-            print(len(inverted_trans))
-            print(len(new_t))
-            
-            len(D230831B_5_trans)/(n_points/len(new_B))
-    
-            
+          
             
             interp_B = np.linspace(0, new_B[-1], len(new_R)*(scaling + 1))
             #interp_R = np.interp(interp_B, new_B, new_R)
@@ -731,44 +719,9 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             plt.title("Post-Processing Rxx vs 1/B")
 
         
-
-        #Calculate average space between 1/B datapoints
-        D230831B_5_delt_B_inv = 1/D230831B_5_B_inv[1:-1] - 1/D230831B_5_B_inv[0:-2]
-        D230831B_5_delt_B_inv_av = np.mean(D230831B_5_delt_B_inv)              #The inverse of this is our artifically created sample rate
+       
+        D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(1/D230831B_5_B_inv, D230831B_5_R_inv, power = 17)
         
-        
-        #Perform FFT, convert x_axis to carrier concentration
-        power = 17
-        n_points = 2**power  ###n_points should be = a POWER OF 2
-        D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)  
-                            #NOTE: len(D230831B_5_trans) ~= (n_points / 2)
-                            #Each element in D230831B_5_trans corresponds to a frequency of    (index)/ n_points / np.abs(D230831B_5_delt_B_inv_av)
-                                        #Where 1/np.abs(D230831B_5_delt_B_inv_av) is the sample rate
-                                        
-                                        
-        #Create x-axis of FFT results. D230831B_5_trans contains data about frequency contribution (in this case, frequency is B). 
-        #Divide by flux quanta value (h/2e) to get carrier concentration
-        D230831B_5_f_array =  (np.arange(len(D230831B_5_trans)) / (n_points*np.abs(D230831B_5_delt_B_inv_av))) * 2 *c.e / c.h  #Factor of 2 if FFT is of spin degenerate region
-        #D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) 
-        
-        
-        print("Interpolation Ratio: " + str(len(D230831B_5_B_inv)/len(D230831B_5_B_pos)))
-        print("# of data points used for FFT: 2^" + str(power))
-        print("Ratio of padded zeros to data: " + str(n_points/len(D230831B_5_B_inv)))
-
-        
-        '''
-        if Rxx_1or2 == 1:
-            plt.figure()
-            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
-            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x, c = 'b', label = "R_{xx_x}")
-        if Rxx_1or2 == 2:
-            plt.figure()
-            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_grad, c = 'r', label = "Grad")
-            plt.plot(D230831B_5_data.An_Field, D230831B_5_data.Rxx_x2, c = 'b', label = "R_{xx_x2}")
-        plt.title("Raw Rxx and Derivative of Rxx VS B")
-        plt.legend()
-        '''    
         
         
         ####MAIN FFT PLOT######
@@ -785,14 +738,13 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         # print("Density n =  ",peak_density*1e-4,r" cm^-2$")
         
         
-        
-        #Plot results, multiply by scalers to convert m to cm
         graph, ax1 = plt.subplots()
         
-        
+        #Plot results, multiply by scalers to convert m to cm, multiply x-axis by 2e/h to convert to carrier concentration
+
         #ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
-        ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
-        ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
+        ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2 *c.e / c.h, 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
+        ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2 *c.e / c.h, 1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
         
         
         #Create x-axis copy to show B field frequency breakdown
@@ -840,7 +792,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                 new_t[reg[0]:reg[1]] -= 1
                 plt.plot(1e-4*D230831B_5_f_array[reg[0]:reg[1]],1e-6*np.abs(D230831B_5_trans[reg[0]:reg[1]]), linestyle = '--', c = 'r')
             new_t = new_t * D230831B_5_trans
-            plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(new_t[fft_start:fft_cutoff]))
+            plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2*c.e/c.h,1e-6*np.abs(new_t[fft_start:fft_cutoff]))
             plt.xlim([0,5e11])
             plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
             plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
@@ -851,7 +803,6 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
 
             #NOW: Inverse rFFT new_t with x axis as D230831B_5_f_array[fft_start:fft_cutoff]
-            #yeet = ft.irfft(D230831B_5_trans, int(len(D230831B_5_B_inv)))
 
             inverted_trans = ft.irfft(new_t)
             #inverted_trans = ft.irfft(D230831B_5_trans)

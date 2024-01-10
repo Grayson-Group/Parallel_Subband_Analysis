@@ -407,9 +407,10 @@ def interpolate_data(R_pos,B_pos, invert=True, pad_zeros=False, scaling_mode="li
         
         B_inv = 1/OneOver_B_inv
 
-        
-    # plt.figure()
-    # plt.scatter(1/B_inv,R_interp)
+
+
+    print("Interpolation Ratio: " + str(len(B_inv)/len(B_pos)))
+
 
     return R_interp, B_inv
 
@@ -487,7 +488,32 @@ def apod_NB(R_inv,B_inv,order=0,show_plot=False,invert=False):
 
 
 
+def real_FFT(x: list, y: list, power):
+    
+    
+    #Calculate average space between datapoints in x
+    delt_x = x[1:-1] - x[0:-2]
+    delt_x_av = np.mean(delt_x)              #The inverse of this is our artifically created sample rate
+    
+    
+    #Perform FFT, convert x_axis to carrier concentration
+    n_points = 2**power  ###n_points should be = a POWER OF 2
+    trans = ft.rfft(y , n=n_points)  
+                        #NOTE: len(trans) ~= (n_points / 2)
+                        #Each element in trans corresponds to a frequency of    (index)/ (n_points* np.abs(delt_x_av))
+                        #Where 1/np.abs(delt_x_av) is the sample rate
+    
+    
+    #Create x-axis of FFT results. Trans contains data about frequency contribution 
+    f_array = np.arange(len(trans))/(n_points*np.abs(delt_x_av))
+     
+    #Let user know details of FFT analysis
+    print("# of data points used for FFT: 2^" + str(power))
+    print("Ratio of padded zeros to data: " + str(n_points/len(x)))
 
+    
+    return trans, f_array
+     
 
 
 
