@@ -639,17 +639,22 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             #Perform FFT, convert x_axis to carrier concentration
             power = 13
             n_points = 2**power  ###n_points should be = a POWER OF 2
-            D230831B_5_trans = ft.rfft(new_R,n=n_points)  
-            D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(spacing) *2*c.e / c.h  #Factor of 2 if FFT is of spin degenerate region
-            
-            
+            D230831B_5_trans = ft.rfft(new_R,n=n_points)
+                                       #NOTE: len(D230831B_5_trans) ~= (n_points / 2)
+            D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / (n_points * np.abs(spacing)) *2*c.e / c.h
+                #These results are basically junk, the results are a frequency breakdown of Rxx vs B, where frequency is 1/B
+                #We are just doing this FFT so we can mechanically alter the FFT results and invert them, smoothing the resulting inverted data
+                #By padding end of data with zeros, you are telling the FFT program that there are no high frequency components to our Rxx data
+                #This forces all data to be smooth, effectively replacing jaggedy triangle Rxx data at low B with smooth oscillations
+                
             print("Ratio of padded zeros to data: " + str(n_points/len(new_B)))
             
             fft_start = 30
             fft_cutoff = -1
             
-            plt.figure()
             
+            #Plot results, multiply by scalers to convert m to cm
+            plt.figure()
             plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
             plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
             plt.legend(loc = "lower right")
@@ -725,19 +730,27 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             plt.ylabel("Rxx")
             plt.title("Post-Processing Rxx vs 1/B")
 
-        # D230831B_5_delt_B_inv_av = np.abs(1/D230831B_5_B_pos[0] - 1/D230831B_5_B_pos[-1])/(0.5*(len(D230831B_5_B_pos)-1))
         
 
         #Calculate average space between 1/B datapoints
         D230831B_5_delt_B_inv = 1/D230831B_5_B_inv[1:-1] - 1/D230831B_5_B_inv[0:-2]
-        D230831B_5_delt_B_inv_av = np.mean(D230831B_5_delt_B_inv)
+        D230831B_5_delt_B_inv_av = np.mean(D230831B_5_delt_B_inv)              #The inverse of this is our artifically created sample rate
         
         
         #Perform FFT, convert x_axis to carrier concentration
         power = 17
         n_points = 2**power  ###n_points should be = a POWER OF 2
         D230831B_5_trans = ft.rfft(D230831B_5_R_inv,n=n_points)  
-        D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) *2*c.e / c.h  #Factor of 2 if FFT is of spin degenerate region
+                            #NOTE: len(D230831B_5_trans) ~= (n_points / 2)
+                            #Each element in D230831B_5_trans corresponds to a frequency of    (index)/ n_points / np.abs(D230831B_5_delt_B_inv_av)
+                                        #Where 1/np.abs(D230831B_5_delt_B_inv_av) is the sample rate
+                                        
+                                        
+        #Create x-axis of FFT results. D230831B_5_trans contains data about frequency contribution (in this case, frequency is B). 
+        #Divide by flux quanta value (h/2e) to get carrier concentration
+        D230831B_5_f_array =  (np.arange(len(D230831B_5_trans)) / (n_points*np.abs(D230831B_5_delt_B_inv_av))) * 2 *c.e / c.h  #Factor of 2 if FFT is of spin degenerate region
+        #D230831B_5_f_array =  np.arange(len(D230831B_5_trans)) / n_points / np.abs(D230831B_5_delt_B_inv_av) 
+        
         
         print("Interpolation Ratio: " + str(len(D230831B_5_B_inv)/len(D230831B_5_B_pos)))
         print("# of data points used for FFT: 2^" + str(power))
@@ -764,7 +777,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         fft_start = 30
         fft_cutoff = -1
         
-        plt.figure()
+        #plt.figure()
         # peaks = sig.find_peaks(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), 
         #                        height = 0.1*np.amax(1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])))
         # print(peaks)
@@ -772,23 +785,45 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         # print("Density n =  ",peak_density*1e-4,r" cm^-2$")
         
         
-        #plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
-        plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
-        plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
-        plt.legend(loc = "lower right")
+        
+        #Plot results, multiply by scalers to convert m to cm
+        graph, ax1 = plt.subplots()
+        
+        
+        #ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
+        ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
+        ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
+        
+        
+        #Create x-axis copy to show B field frequency breakdown
+        ax1.set_ylabel(r'FFT Amplitude')
+        ax1.set_xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
+        ax1.set_xlim(0,5E11)
+        ax1.legend(loc = "lower right")
+        
+        
+        ax2 = ax1.twiny()
+        ax2.set_xbound(ax1.get_xbound())
+        ax2.set_xticks(ax1.get_xticks())
+        ax2.set_xticklabels(np.round((x/((2*c.e/c.h)*1e-4)), 3) for x in ax1.get_xticks())
+        ax2.set_xlabel("B $(T)$")
+        title = ax1.set_title("Final FFT results")
+        title.set_y(1.1)
+        
+        
         
         # for peak in peaks[0]:
         #     plt.scatter(1e-4*D230831B_5_f_array[fft_start+peak],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])[peak])
         #     plt.annotate(np.format_float_scientific(1e-4*D230831B_5_f_array[fft_start+peak], unique = False, precision=2,exp_digits=0)+ r" cm$^{-2}$",[1.05e-4*D230831B_5_f_array[fft_start+peak],0.9e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff])[peak]])
-        plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
-                     xy=[0.65,0.95],
-                     xycoords='axes fraction')
-        plt.annotate(text=r"$T$ = 20 mK",
-                     xy=[0.7,0.9],
-                     xycoords='axes fraction')
-        plt.ylabel(r'FFT Amplitude')
-        plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
-        plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
+        #plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+        #             xy=[0.65,0.95],
+        #             xycoords='axes fraction')
+        #plt.annotate(text=r"$T$ = 20 mK",
+        #             xy=[0.7,0.9],
+        #             xycoords='axes fraction')
+        #plt.ylabel(r'FFT Amplitude')
+        #plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
+        #plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
         #plt.xlim(0,5e11)
         
 
