@@ -178,7 +178,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     
     
     smoothing = 0        ###Option to smooth jaggady low B data before performing FFT
-    RemoveFFTSpikes = 0  ###User defines regions of FFT to remove, then FFT is inverted back to resistance vs. 1/B data
+    RemoveFFTSpikes = 1  ###User defines regions of FFT to remove, then FFT is inverted back to resistance vs. 1/B data
     
     
     file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
@@ -414,21 +414,20 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         # plt.plot(inv.Rxx[nu_bounds[3][0]:nu_bounds[3][1]])
         plt.figure("RAWXX")
         plt.title("RAWXX, Vg = " + str(Vg) + "mV")
-        #plt.plot(inv.Rxx)
-        #plt.xlim([0.51, 0.53])
-        #plt.ylim([0, 10])
-        plt.plot(inv.B_field,inv.Rxx, c = 'b', label = "Rxx")
-        #plt.plot(inv.B_field, inv.Rxx_y, c = 'b')
-        #plt.plot(inv.B_field, inv.Rxx2, c = 'orange',label = "Rxx_2")
-        #plt.plot(inv.B_field, inv.Rxx2_y, c = 'orange')
+        if Rxx_1or2 == 1:
+            plt.plot(inv.B_field,inv.Rxx, c = 'b', label = "Rxx")
+            plt.plot(inv.B_field, inv.Rxx_y, c = 'b', linestyle = "--", label = "Rxx_y")
+        if Rxx_1or2 == 2:
+            plt.plot(inv.B_field, inv.Rxx2, c = 'b',label = "Rxx_2")
+            plt.plot(inv.B_field, inv.Rxx2_y, c = 'b', linestyle = "--", label = "Rxx_2y")
         #plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
         #plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
         #plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
         #plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-        # plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-        # plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-        # plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-        # plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+        #plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+        #plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+        #plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+        #plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
         plt.ylabel("$R_{xx} (\Omega)$")
         plt.xlabel("B (T)")
         plt.grid()
@@ -462,16 +461,14 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         plt.title("RAWXY, Vg = " + str(Vg) + "mV")
         plt.plot(inv.B_field,inv.Rxy)
         plt.plot(inv.B_field,inv.Rxy_y)
-        #plt.xlim([4.0, 4.1])
-        #plt.ylim([12925, 12950])
         #plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxy[nu_bounds[1][0]],inv.Rxy[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
         #plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxy[nu_bounds[2][0]],inv.Rxy[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
         #plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxy[nu_bounds[3][0]],inv.Rxy[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
         #plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxy[nu_bounds[4][0]],inv.Rxy[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-        # plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-        # plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-        # plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-        # plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+        #plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+        #plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+        #plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+        #plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
         plt.ylabel("$R_{xy} (\Omega)$")
         plt.xlabel("B (T)")
         plt.grid()
@@ -635,8 +632,9 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             
             
             #Perform FFT, convert x_axis to carrier concentration
-          
-            D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(D230831B_5_B_pos, new_R, 13)
+            
+            print("\n\nPerforming FFT of Rxx vs B for SMOOTHING")
+            D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(D230831B_5_B_pos, new_R, 11)
             #These results are basically junk, the results are a frequency components of Rxx vs B, where frequency is 1/B
             #We are just doing this FFT so we can mechanically alter the FFT results and invert them, smoothing the resulting inverted data
             #By padding end of data with zeros, you are telling the FFT program that there are no high frequency components to our Rxx data
@@ -665,9 +663,8 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             
             scaling = 10
             new_t = np.append(D230831B_5_trans, np.zeros(len(D230831B_5_trans)*scaling))
-            print(new_t)
             inverted_trans = ft.irfft(new_t)
-          
+            print("To smooth data, FFT results are padded X" + str(scaling))
             
             interp_B = np.linspace(0, new_B[-1], len(new_R)*(scaling + 1))
             #interp_R = np.interp(interp_B, new_B, new_R)
@@ -683,11 +680,17 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             D230831B_5_B_pos = interp_B[cutoff[0][-1]:]
             D230831B_5_R_pos = inverted_trans[cutoff[0][-1]:len(interp_B)]
 
+
+
         #Interpolate inbetween data points, possibly apply scaling
-        D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, pad_zeros= False, interp_ratio=10,
+        D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, pad_zeros= False, interp_ratio=4,
                                                                                         invert=False, scaling_order=1.5, scaling_mode="None")
         #If order > 0, apply some amount of Norton-Beer apodization
         D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv, D230831B_5_B_inv, order=3, show_plot=True, invert=False)
+        
+        
+        
+        
         
         
         ####PAD ZEROS TO 0T^-1 
@@ -719,6 +722,8 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             plt.title("Post-Processing Rxx vs 1/B")
 
         
+
+        print("\n\nPerforming FFT of Rxx vs 1/B")
        
         D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(1/D230831B_5_B_inv, D230831B_5_R_inv, power = 17)
         
@@ -738,9 +743,11 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         # print("Density n =  ",peak_density*1e-4,r" cm^-2$")
         
         
-        graph, ax1 = plt.subplots()
         
-        #Plot results, multiply by scalers to convert m to cm, multiply x-axis by 2e/h to convert to carrier concentration
+        #####  Plot Results  ####### 
+        #multiply by scalers to convert m to cm, multiply x-axis by 2e/h to convert to carrier concentration
+        graph, ax1 = plt.subplots()
+
 
         #ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
         ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2 *c.e / c.h, 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
@@ -757,7 +764,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         ax2 = ax1.twiny()
         ax2.set_xbound(ax1.get_xbound())
         ax2.set_xticks(ax1.get_xticks())
-        ax2.set_xticklabels(np.round((x/((2*c.e/c.h)*1e-4)), 3) for x in ax1.get_xticks())
+        ax2.set_xticklabels(np.round((x/((2*c.e/c.h)*1e-4)), 3) for x in ax1.get_xticks())   #Convert carrier concentration back to B
         ax2.set_xlabel("B $(T)$")
         title = ax1.set_title("Final FFT results")
         title.set_y(1.1)
@@ -779,22 +786,33 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         #plt.xlim(0,5e11)
         
 
-        ###TESTING, remove spikes from FFT, then inverse FFT to figure out source of noise
+        ###Remove spikes from FFT, then inverse FFT to figure out source of noise
         if RemoveFFTSpikes == 1:
             
-            region = [[120, 165], [255,315], [390, 450], [550,600]]  #Define regions of data to remove
-
+            
+            ###### USER DEFINED REGIONS OF DATA TO ERASE ########
+            region = [[1e11, 2e11], [3e11, 3.5e11]]  #Define regions using CARRIER CONC. in cm^-2
+            
+            
 
             #use new_t array to copy all FFT data, but replace defined regions with zeros
             new_t = np.ones(len(D230831B_5_trans))
             plt.figure()
+            
+            
+            ind = [0,0]   #Initialize index holding array
             for reg in region[:]:
-                new_t[reg[0]:reg[1]] -= 1
-                plt.plot(1e-4*D230831B_5_f_array[reg[0]:reg[1]],1e-6*np.abs(D230831B_5_trans[reg[0]:reg[1]]), linestyle = '--', c = 'r')
+                
+                ind[0] = QFT.IndofX(1e-4*D230831B_5_f_array*2*c.e/c.h, reg[0])
+                ind[1] = QFT.IndofX(1e-4*D230831B_5_f_array*2*c.e/c.h, reg[1])
+                
+                new_t[ind[0]:ind[1]] -= 1
+                plt.plot(1e-4*D230831B_5_f_array[ind[0]:ind[1]]*2*c.e/c.h, 1e-6*np.abs(D230831B_5_trans[ind[0]:ind[1]]), linestyle = '--', c = 'r')
+                
             new_t = new_t * D230831B_5_trans
-            plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2*c.e/c.h,1e-6*np.abs(new_t[fft_start:fft_cutoff]))
+            plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2*c.e/c.h, 1e-6*np.abs(new_t[fft_start:fft_cutoff]))
             plt.xlim([0,5e11])
-            plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
+            plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg, precision=4, trim='-') + ' mV')
             plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
                      xy=[0.65,0.8],
                      xycoords='axes fraction')

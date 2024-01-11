@@ -63,7 +63,7 @@ if __name__ == "__main__":
                         ####NOTE: All specialized data files have lockin2xx_bool == True
 
 
-    Rxx = 2         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
+    Rxx = 1         ###1 or 2, selects whether to use Rxx_x (1) or Rxx_x2 (2) for any FFT analysis
     grad = False    ###If true, FFT will be calculated using DERIVATIVE of Rxx vs. 1/B. If false use raw Rxx vs. 1/B
     
 ###################################################################################    

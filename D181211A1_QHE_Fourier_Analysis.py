@@ -12,6 +12,7 @@ from scipy import signal as sig
 import scipy.constants as c
 import os
 from operator import index, indexOf
+import warnings
 
 
 #Current should be ~2uA
@@ -140,6 +141,16 @@ def BofR(R_data,B_data,R_target):
     min_index = indexOf(np.abs(R_data - R_target),min_val)
     return B_data[min_index]
 
+def IndofX(data, target):
+    '''
+    Find value closest to corresponding target value in data
+    '''
+    
+    min_val = np.amin(abs(data - target))
+    min_index = indexOf(np.abs(data - target), min_val)
+    return int(min_index)
+
+
 def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point_inds=[],window_slices=[],start_point=0,chop_point=0,invert=False,show_plot=False):
 
     if "xx" in R_ind:
@@ -155,12 +166,12 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
     elif "xx_grad" in R_ind:
         R_dat = data_struct.Rxx_grad
 
-    # print(R_dat)
+    
     
     if invert:
         B_pos = np.array(data_struct.An_Field[data_struct.An_Field < 0])[start_point:chop_point:-1]
         R_pos = np.array(R_dat[data_struct.An_Field < 0])[start_point:chop_point:-1]
-        # print(R_pos,B_pos)
+        
 
         B_0 = np.amax(B_pos)
         B_end = np.amin(B_pos)
@@ -174,7 +185,6 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
         
         B_0 = np.amin(B_pos)
         B_end = np.amax(B_pos)
-        # print(B_0,B_end)
 
         R_0 = RofB(R_pos,B_pos,B_0)
 
@@ -217,7 +227,7 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
         left_avg = np.average(R_pos[inner_index[1]:])
         
         slope = (right_avg - left_avg)/((1/(B_pos[0])) - (1/(B_pos[-1])))
-        print(slope)
+        #print(slope)
 
         lin_fit = slope*(1/B_pos) + left_avg
         post_sub = R_pos - lin_fit
@@ -409,7 +419,7 @@ def interpolate_data(R_pos,B_pos, invert=True, pad_zeros=False, scaling_mode="li
 
 
 
-    print("Interpolation Ratio: " + str(len(B_inv)/len(B_pos)))
+    print("\n Interpolation Ratio: " + str(len(B_inv)/len(B_pos)))
 
 
     return R_interp, B_inv
@@ -489,7 +499,13 @@ def apod_NB(R_inv,B_inv,order=0,show_plot=False,invert=False):
 
 
 def real_FFT(x: list, y: list, power):
+    '''
+    Take REAL DATA, spits out FFT of data 
     
+    trans: FFT results, array of complex numbers
+    f_array: Calculated frequencies corresponding to each element of trans
+    '''
+
     
     #Calculate average space between datapoints in x
     delt_x = x[1:-1] - x[0:-2]
@@ -508,10 +524,12 @@ def real_FFT(x: list, y: list, power):
     f_array = np.arange(len(trans))/(n_points*np.abs(delt_x_av))
      
     #Let user know details of FFT analysis
-    print("# of data points used for FFT: 2^" + str(power))
-    print("Ratio of padded zeros to data: " + str(n_points/len(x)))
-
     
+    
+    print("\n\n # of data points used for FFT: 2^" + str(power))
+    print("Ratio of padded zeros to data: " + str(n_points/len(x)))
+    if n_points <= len(y):
+        warnings.warn("WARNING: Selected power of 2 is too small, you are cropping the data")
     return trans, f_array
      
 
