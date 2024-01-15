@@ -1,5 +1,6 @@
 import csv
 import math
+import cmath
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.figure as fig
@@ -177,8 +178,11 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     SaveFFTXX = 0
     
     
-    smoothing = 0        ###Option to smooth jaggady low B data before performing FFT
-    RemoveFFTSpikes = 1  ###User defines regions of FFT to remove, then FFT is inverted back to resistance vs. 1/B data
+    smoothing = 1        ###Option to smooth jaggady low B data before performing FFT
+    RemoveFFTSpikes = 0  ###User defines regions of FFT to remove, then FFT is inverted back to resistance vs. 1/B data
+    pad_zeros = 1        ###Do you want to pad post-processed Rxx and B data with zeros to a user defined start point?
+    
+    
     
     
     file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
@@ -287,9 +291,6 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     #         Parallel Subband Analysis               #
     ###################################################
     ###################################################
-    
-    
-    
     
     
     
@@ -634,7 +635,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             #Perform FFT, convert x_axis to carrier concentration
             
             print("\n\nPerforming FFT of Rxx vs B for SMOOTHING")
-            D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(D230831B_5_B_pos, new_R, 11)
+            D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(D230831B_5_B_pos, new_R, 12)
             #These results are basically junk, the results are a frequency components of Rxx vs B, where frequency is 1/B
             #We are just doing this FFT so we can mechanically alter the FFT results and invert them, smoothing the resulting inverted data
             #By padding end of data with zeros, you are telling the FFT program that there are no high frequency components to our Rxx data
@@ -693,20 +694,24 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         
         
         
-        ####PAD ZEROS TO 0T^-1 
-        OneOver_B_inv = 1/D230831B_5_B_inv
-        
-        spacing = np.round(OneOver_B_inv[1] - OneOver_B_inv[0], 5)
-        num_spacing = int(np.round(OneOver_B_inv[0]/spacing))
-        new_B = np.linspace(0 + spacing, OneOver_B_inv[0]-spacing, num_spacing - 1)
-        added_length = len(new_B)
-        new_B = np.append(new_B, OneOver_B_inv)
-        OneOver_B_inv = new_B
-        
-        zeros = np.zeros(added_length)
-        D230831B_5_R_inv = np.append(zeros, D230831B_5_R_inv)
-        
-        D230831B_5_B_inv = 1/OneOver_B_inv
+        ####PAD ZEROS TO USER DEFINED START POINT "pad_start"
+        if pad_zeros == True:
+            pad_start = 0    #Enter start value of padding in 1/B
+            
+            OneOver_B_inv = 1/D230831B_5_B_inv
+            
+            spacing = np.round(OneOver_B_inv[1] - OneOver_B_inv[0], 5) #Calculate spacing between datapoints in 1/B
+                                                                        #I am assuming that OneOver_B_inv is already evenly spaced
+            num_spacing = int(np.round((OneOver_B_inv[0]-pad_start)/spacing))
+            new_B = np.linspace(pad_start + spacing, OneOver_B_inv[0]-spacing, num_spacing - 1)
+            added_length = len(new_B)
+            new_B = np.append(new_B, OneOver_B_inv)
+            OneOver_B_inv = new_B
+            
+            zeros = np.zeros(added_length)
+            D230831B_5_R_inv = np.append(zeros, D230831B_5_R_inv)
+            
+            D230831B_5_B_inv = 1/OneOver_B_inv
         
 
                 #####Error checking Plots######
@@ -732,7 +737,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         ####MAIN FFT PLOT######
 
         #Define section of FFT to plot
-        fft_start = 30
+        fft_start = 0
         fft_cutoff = -1
         
         #plt.figure()
@@ -748,26 +753,34 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         #multiply by scalers to convert m to cm, multiply x-axis by 2e/h to convert to carrier concentration
         graph, ax1 = plt.subplots()
 
-
-        #ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
-        ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2 *c.e / c.h, 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
-        ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2 *c.e / c.h, 1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
+        
+        #ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2 *c.e / c.h,1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]))
+        #ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2 *c.e / c.h, 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
+        #ax1.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2 *c.e / c.h, 1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
+        #ax1.set_xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
+        #ax1.set_xlim(0,5E11)
+        
+        
+        ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), c = "black", linestyle = '--', label = "Magn")
+        ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "Real")
+        ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "Imag")
+        ax1.set_xlabel("B ($T$)")
+        ax1.set_xlim(0,10)
         
         
         #Create x-axis copy to show B field frequency breakdown
         ax1.set_ylabel(r'FFT Amplitude')
-        ax1.set_xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
-        ax1.set_xlim(0,5E11)
         ax1.legend(loc = "lower right")
+        title = ax1.set_title("Final FFT results")
+        title.set_y(1.1)
         
-        
+        '''
         ax2 = ax1.twiny()
         ax2.set_xbound(ax1.get_xbound())
         ax2.set_xticks(ax1.get_xticks())
         ax2.set_xticklabels(np.round((x/((2*c.e/c.h)*1e-4)), 3) for x in ax1.get_xticks())   #Convert carrier concentration back to B
         ax2.set_xlabel("B $(T)$")
-        title = ax1.set_title("Final FFT results")
-        title.set_y(1.1)
+        '''
         
         
         
@@ -785,7 +798,110 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         #plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
         #plt.xlim(0,5e11)
         
+        
+        
+        #########   UNROTATE CORKSCREW EFFECT:
+            #newf = f * exp^(-i*2*pi*(x/0.05))
+            
+        i = 0
+        
+        #FOR 1ST PROMINENT FFT PEAK
+        #omega = 1e-4*(2*c.e/c.h)*(2*c.pi/0.0801e11)        
+        #freq = 1e-4*(2*c.e/c.h)/0.08e11
+        
+        #FOR 2ND PROMINENT FFT PEAK
+            #4*(8.217  - 8.1564) = 0.2424
+            #TO carrier conc: 0.1170e11
+        omega = 1e-4*(2*c.e/c.h)*(2*c.pi/0.1170e11)
+        #freq = 1e-4*(2*c.e/c.h)/0.1172e11
+        rotated_FFT = []
+        for el in D230831B_5_trans:
+            angle = (D230831B_5_f_array[i] * omega)              #In radians
+            
+            #Rotate 
+            Rot_Re = el.real*np.cos(angle) - el.imag*np.sin(angle)    
+            Rot_Im = el.real*np.sin(angle) + el.imag*np.cos(angle)
+            rotated_FFT.append(complex(Rot_Re,Rot_Im))
+            #print(angle)
+            i += 1
+        
+        fft_start = 0
+        fft_cutoff = -1
+        
+        plt.figure()
+        #plt.plot(1e-4*(2*c.e/c.h)*D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(rotated_FFT[fft_start:fft_cutoff]), c='b', label = "Real")
+        #plt.plot(1e-4*(2*c.e/c.h)*D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(rotated_FFT[fft_start:fft_cutoff]), c='r', label = "Imag")
+        #plt.xlabel("Carrier Conc ($n cm^{-2}$)")
+        
+        plt.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.abs(rotated_FFT[fft_start:fft_cutoff]), c="black", linestyle = '--', label = "Magn")
+        plt.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(rotated_FFT[fft_start:fft_cutoff]), c='b', label = "Real")
+        plt.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(rotated_FFT[fft_start:fft_cutoff]), c='r', label = "Imag")
+        plt.xlabel("B (${T}$)")
 
+        
+
+        plt.ylabel(r'FFT Amplitude')
+        plt.legend(loc = "lower right")
+        plt.annotate(text = "Rotated with frequency of: \n" + f"{omega/(2*c.pi):f}" + " $T^{-1}$", 
+                     xy=[0.45,0.85],
+                     xycoords='axes fraction')
+        plt.title("Rotated FFT results")
+        
+        plt.xlim(0,10)
+        #plt.xlim(0,5e11)
+        
+        
+        
+        
+        
+        ########Plot Inverted Results################
+        invert_rotated = ft.irfft(rotated_FFT)
+        plt.figure()
+        
+        #Create associated x-axis (1/B) for FFT results
+        addedon = np.linspace(OneOver_B_inv[-1] + spacing, spacing*(len(invert_rotated)), num= (len(invert_rotated) - len(OneOver_B_inv)))
+        FFT_Results_OneOver_B_inv = np.append(OneOver_B_inv, addedon)      #Note: spacing variable is calculated a couple hundred lines before
+
+
+        plt.title("Inverted results of rotated FFT")
+        plt.xlabel("1/B $(T^{-1})$")
+        plt.ylabel("Grad. of Rxx")
+        plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                 xy=[0.65,0.95],
+                 xycoords='axes fraction')
+        
+        #plt.plot(OneOver_B_inv, invert_rotated[:len(D230831B_5_R_inv)])
+        plt.plot(FFT_Results_OneOver_B_inv, invert_rotated)
+        
+        
+        
+        
+        #########MOVE END OF Inverted FFT results to NEGATIVE X AXIS#############
+        
+        ratio = 0.8
+        distance = int(len(OneOver_B_inv) * ratio)#Num of data points from 0 in either direction to plot
+        
+        left_axis = np.linspace(-1*spacing*distance, 0 - spacing, distance)
+        right_axis = OneOver_B_inv[:distance]
+        
+        newx = []
+        newx = np.append(newx, left_axis)
+        newx = np.append(newx, right_axis)
+        
+        newy = []
+        newy = np.append(newy, invert_rotated[-1*distance:])
+        newy = np.append(newy, invert_rotated[:distance])
+        
+        plt.figure()
+        plt.plot(newx, newy)
+        plt.xlabel("1/B  $(T^{-1})$")
+        plt.ylabel("Rxx")
+        plt.title("Inverted results of rotated FFT")
+        
+        
+        
+        
+        
         ###Remove spikes from FFT, then inverse FFT to figure out source of noise
         if RemoveFFTSpikes == 1:
             

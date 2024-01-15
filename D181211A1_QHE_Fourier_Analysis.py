@@ -375,6 +375,8 @@ def interpolate_data(R_pos,B_pos, invert=True, pad_zeros=False, scaling_mode="li
     # plt.plot(np.linspace(1/B_max,1/B_min,interp_ratio*len(B_pos)))
     # plt.plot(B_pos)
     #B_inv = 1/np.linspace(1/B_max,1/B_min,np.round(interp_ratio*len(B_pos)))
+    
+    
     OneOver_B_inv = np.linspace(1/B_max,1/B_min,np.round(interp_ratio*len(B_pos)))
     B_inv = 1/OneOver_B_inv
     
@@ -390,6 +392,8 @@ def interpolate_data(R_pos,B_pos, invert=True, pad_zeros=False, scaling_mode="li
         scaling_fun = 1
 
 
+    #Create R_interp, a resistance array matching spacing of OneOver_B_inv
+    #with resistance values interpolated from R_pos
     if invert:
         # plt.figure()
         # plt.plot(np.flip(B_pos))
@@ -404,7 +408,9 @@ def interpolate_data(R_pos,B_pos, invert=True, pad_zeros=False, scaling_mode="li
     
     if pad_zeros == True:
         #Extrapolate OneOver_B_inv to 0T with even spacing
-        #Pad OneOver_R_inv data with zeros down to 0T to match spacing of OneOver_B_inv
+        #Pad OneOver_R_inv data with zeros down to 0T to match spacing of 
+        
+        #NOTE: If pad_zeros == True, then later apodization will include padded zeros 
         spacing = np.round(OneOver_B_inv[1] - OneOver_B_inv[0], 5)
         num_spacing = int(np.round(OneOver_B_inv[0]/spacing))
         new_B = np.linspace(0 + spacing, OneOver_B_inv[0]-spacing, num_spacing - 1)
