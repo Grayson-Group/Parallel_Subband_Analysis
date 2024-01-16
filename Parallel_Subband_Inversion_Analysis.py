@@ -179,13 +179,18 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     
     
     smoothing = 1        ###Option to smooth jaggady low B data before performing FFT
-    apodization = 0      ###CAN BE 0, 1, 2, or 3: Defines order of NB apodization to apply to Rxx vs 1/B data. Apodization = 0 means NO apodization
+    apodization = 3      ###CAN BE 0, 1, 2, or 3: Defines order of NB apodization to apply to Rxx vs 1/B data. Apodization = 0 means NO apodization
     pad_zeros = 1        ###Do you want to pad post-processed Rxx and B data with zeros to a user defined start point?
-    rotate = 1           ###Rotate FFT results of post-processed Rxx data by a user defined Omega in complex plane
+    
+    rotate = 0           ###Rotate FFT results of post-processed Rxx data by a user defined Omega in complex plane
     if rotate == 1:
         translate = 1    ###After rotation, do you want to translate the end of inverse FFT results to the negative x-axis?
-    RemoveFFTSpikes = 1  ###User defines regions of FFT to remove, then FFT is inverted back to resistance vs. 1/B data
     
+    RemoveFFTSpikes = 1  ###User defines regions of FFT to remove, then FFT is inverted back to resistance vs. 1/B data
+    if RemoveFFTSpikes == 1:
+        replace = "Linear"      #Set to "Linear" OR "Zeros". When user defined spikes in the FFT are removed, 
+                                        #do you want the spikes to be replaced with "Zeros" or a "Linear" fit between endpoints?
+                                
     
     
     file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
@@ -914,24 +919,37 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             ###### USER DEFINED REGIONS OF DATA TO ERASE ########
             #region = [[0, 1.8e11], [2.2e11, 1e15]]  #Define regions using CARRIER CONC. in cm^-2
             #region = [[0, 3.8e11], [4.15e11, 1e15]]  #Define regions using CARRIER CONC. in cm^-2
-            region = [[1.8e11, 2.2e11], [3.8e11, 4.15e11]]
+            region = [[1.82e11, 2.2e11], [3.8e11, 4.15e11]]
             
 
             #use new_t array to copy all FFT data, but replace defined regions with zeros
             new_t = np.ones(len(D230831B_5_trans))
+            linear_replace = np.zeros(len(D230831B_5_trans))
             plt.figure()
             
             
             ind = [0,0]   #Initialize index holding array
             for reg in region[:]:
-                
+                #Find index of user defined regions (converts carrier conc/cm^2 to magnetic field)
                 ind[0] = QFT.IndofX(1e-4*D230831B_5_f_array*2*c.e/c.h, reg[0])
                 ind[1] = QFT.IndofX(1e-4*D230831B_5_f_array*2*c.e/c.h, reg[1])
                 
-                new_t[ind[0]:ind[1]] -= 1
+                
+                #Fill regions of new arrays with relevant data
+                new_t[ind[0]:ind[1]] -= 1       #Sets user defined regions of array to 0
+                linear_replace[ind[0]:ind[1]] = np.linspace(np.abs(D230831B_5_trans[ind[0]]), np.abs(D230831B_5_trans[ind[1]]), ind[1] - ind[0])  #Sets user defined regions of array to a linear approximation between endpoints of D230831B_5_trans
+                
+                
                 plt.plot(1e-4*D230831B_5_f_array[ind[0]:ind[1]]*2*c.e/c.h, 1e-6*np.abs(D230831B_5_trans[ind[0]:ind[1]]), linestyle = '--', c = 'r')
                 
-            new_t = new_t * D230831B_5_trans
+            
+            if replace == "Zeros":    
+                new_t = new_t * D230831B_5_trans
+            elif replace == "Linear":
+                new_t = (new_t * D230831B_5_trans) + linear_replace
+            else:
+                raise NameError('Invalid choice of "replace", see top of Parallel_Subband_Inversion_Analysis')
+                
             plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2*c.e/c.h, 1e-6*np.abs(new_t[fft_start:fft_cutoff]))
             plt.xlim([0,5e11])
             plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg, precision=4, trim='-') + ' mV')
@@ -950,11 +968,13 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             plt.figure()
             plt.title("Inverted FFT with peaks removed")
             plt.xlabel("1/B $(T^{-1})$")
-            plt.ylabel("Grad. of Rxx")
+            if gradient == True:
+                plt.ylabel("Deriv. of Rxx")
+            else:
+                plt.ylabel("Rxx")
             plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
                      xy=[0.65,0.95],
                      xycoords='axes fraction')
-            #plt.plot(1/D230831B_5_B_inv, inverted_trans[:int(len(inverted_trans)/padding)])
             plt.plot(1/D230831B_5_B_inv, inverted_trans[:len(D230831B_5_R_inv)])
 
 
