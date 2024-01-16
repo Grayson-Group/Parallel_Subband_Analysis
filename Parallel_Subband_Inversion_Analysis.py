@@ -1,19 +1,12 @@
-import csv
-import math
-import cmath
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.figure as fig
 import numpy as np
-from scipy import optimize as opt
-from scipy import stats as st
 from scipy import fft as ft
 from scipy import signal as sig
-import scipy.constants as c
-import os
-from operator import index, indexOf
-import D181211A1_QHE_Fourier_Analysis as QFT
 from bisect import bisect_left, bisect_right
+import scipy.constants as c
+import D181211A1_QHE_Fourier_Analysis as QFT
 
 
 
@@ -160,8 +153,20 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     '''
     
     
+    smoothing = 1        ###Option to smooth jaggady low B data before performing FFT
+    apodization = 2      ###CAN BE 0, 1, 2, or 3: Defines order of NB apodization to apply to Rxx vs 1/B data. Apodization = 0 means NO apodization
+    pad_zeros = 0        ###Do you want to pad post-processed Rxx and B data with zeros to a user defined start point?
     
-   
+    
+    rotate = 0           ###Rotate FFT results of post-processed Rxx data by a user defined Omega in complex plane
+    if rotate == 1:
+        translate = 1    ###After rotation, do you want to translate the end of inverse FFT results to the negative x-axis?
+    
+    
+    RemoveFFTSpikes = 1  ###User defines regions of FFT to remove, then FFT is inverted back to Rxx vs. 1/B data
+    if RemoveFFTSpikes == 1:
+        replace = "Zeros"      #Set to "Linear" OR "Zeros". When user defined spikes in the FFT are removed, 
+                                        #do you want the spikes to be replaced with "Zeros" or a "Linear" fit between endpoints?
     
     
     PlotRAWXX = 1
@@ -169,7 +174,8 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     PlotINVXX = 0
     PlotINVXY = 0
     PlotFFTXX = 1
-    
+    PlotSMOOTHINGFFT = 1
+    PlotIFFTXX = 1
 
     SaveRAWXX = 0
     SaveRAWXY = 0
@@ -178,19 +184,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     SaveFFTXX = 0
     
     
-    smoothing = 1        ###Option to smooth jaggady low B data before performing FFT
-    apodization = 3      ###CAN BE 0, 1, 2, or 3: Defines order of NB apodization to apply to Rxx vs 1/B data. Apodization = 0 means NO apodization
-    pad_zeros = 1        ###Do you want to pad post-processed Rxx and B data with zeros to a user defined start point?
-    
-    rotate = 0           ###Rotate FFT results of post-processed Rxx data by a user defined Omega in complex plane
-    if rotate == 1:
-        translate = 1    ###After rotation, do you want to translate the end of inverse FFT results to the negative x-axis?
-    
-    RemoveFFTSpikes = 1  ###User defines regions of FFT to remove, then FFT is inverted back to resistance vs. 1/B data
-    if RemoveFFTSpikes == 1:
-        replace = "Linear"      #Set to "Linear" OR "Zeros". When user defined spikes in the FFT are removed, 
-                                        #do you want the spikes to be replaced with "Zeros" or a "Linear" fit between endpoints?
-                                
+                   
     
     
     file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
@@ -633,11 +627,12 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             new_R = np.append(zeros, D230831B_5_R_pos)
             #np.zeros()
             
-            plt.figure()
-            plt.plot(new_B, new_R)
-            plt.title("Added B to 0T")
-            plt.xlabel("B (T)")
-            plt.ylabel("Rxx")
+            if PlotSMOOTHINGFFT == True:
+                plt.figure()
+                plt.plot(new_B, new_R)
+                plt.title("Added B to 0T")
+                plt.xlabel("B (T)")
+                plt.ylabel("Rxx")
             
             
             #Perform FFT, convert x_axis to carrier concentration
@@ -653,35 +648,42 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             fft_cutoff = -1
             
             
-            #Plot results, multiply by scalers to convert m to cm,  
-            plt.figure()
-            plt.plot(D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
-            plt.plot(D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
-            plt.legend(loc = "lower right")
             
-            plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
-                         xy=[0.65,0.95],
-                         xycoords='axes fraction')
-            plt.annotate(text=r"$T$ = 20 mK",
-                         xy=[0.7,0.9],
-                         xycoords='axes fraction')
-            plt.ylabel(r'FFT Amplitude')
-            plt.xlabel("1/B ($^{-T}$)")
-            plt.title(r'FFT of Rxx vs B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
-            #plt.xlim(0,5e11)
+            
+            #Plot results, multiply by scalers to convert m to cm,  
+            if PlotSMOOTHINGFFT == True:
+                plt.figure()
+                plt.plot(D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
+                plt.plot(D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
+                plt.legend(loc = "lower right")
+                
+                plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                             xy=[0.65,0.95],
+                             xycoords='axes fraction')
+                plt.annotate(text=r"$T$ = 20 mK",
+                             xy=[0.7,0.9],
+                             xycoords='axes fraction')
+                plt.ylabel(r'FFT Amplitude')
+                plt.xlabel("1/B ($^{-T}$)")
+                plt.title(r'FFT of Rxx vs B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
+                #plt.xlim(0,5e11)
+            
+            
             
             scaling = 10
             new_t = np.append(D230831B_5_trans, np.zeros(len(D230831B_5_trans)*scaling))
             inverted_trans = ft.irfft(new_t)
-            print("To smooth data, FFT results are padded X" + str(scaling))
             
+            print("To smooth data, FFT results are padded X" + str(scaling))
             interp_B = np.linspace(0, new_B[-1], len(new_R)*(scaling + 1))
             #interp_R = np.interp(interp_B, new_B, new_R)
-            plt.figure()
-            plt.plot(interp_B, inverted_trans[:len(interp_B)])   #NOTE: amplitude is off by ~ factor of 10
-            plt.title("Smoothed Inverse FFT Results")
-            plt.xlabel("B (T)")
-            plt.ylabel("Rxx (Ohms)")
+            
+            if PlotSMOOTHINGFFT == True:
+                plt.figure()
+                plt.plot(interp_B, inverted_trans[:len(interp_B)])   #NOTE: amplitude is off by ~ factor of 10
+                plt.title("Smoothed Inverse FFT Results")
+                plt.xlabel("B (T)")
+                plt.ylabel("Rxx (Ohms)")
             
             
             #Rename data, remove added padded data
@@ -694,6 +696,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         #Interpolate inbetween data points, possibly apply scaling
         D230831B_5_R_inv , D230831B_5_B_inv = QFT.interpolate_data(D230831B_5_R_pos, D230831B_5_B_pos, pad_zeros= False, interp_ratio=4,
                                                                                         invert=False, scaling_order=1.5, scaling_mode="None")
+        
         #If order > 0, apply some amount of Norton-Beer apodization
         D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv, D230831B_5_B_inv, order = apodization, show_plot=True, invert=False)
         
@@ -917,17 +920,18 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             
             
             ###### USER DEFINED REGIONS OF DATA TO ERASE ########
-            #region = [[0, 1.8e11], [2.2e11, 1e15]]  #Define regions using CARRIER CONC. in cm^-2
-            #region = [[0, 3.8e11], [4.15e11, 1e15]]  #Define regions using CARRIER CONC. in cm^-2
-            region = [[1.82e11, 2.2e11], [3.8e11, 4.15e11]]
+            #region = [[0, 1.79e11], [2.3e11, 1e15]]  #Define regions using CARRIER CONC. in cm^-2
+            #region = [[0, 3.7e11], [4.2e11, 1e15]]  #Define regions using CARRIER CONC. in cm^-2
+            #region = [[1.79e11, 2.3e11], [3.7e11, 4.2e11], [5.7e11, 6.2e11]]
             
-
+            region = [[0, 1.79e11], [2.3e11, 3.7e11], [4.2e11, 5.7e11], [6.2e11, 1e15]]
+            
+            
             #use new_t array to copy all FFT data, but replace defined regions with zeros
             new_t = np.ones(len(D230831B_5_trans))
-            linear_replace = np.zeros(len(D230831B_5_trans))
-            plt.figure()
+            linear_replace = np.zeros(len(D230831B_5_trans))            
             
-            
+            z = 0 #Dummy variable, used for plotting purposes
             ind = [0,0]   #Initialize index holding array
             for reg in region[:]:
                 #Find index of user defined regions (converts carrier conc/cm^2 to magnetic field)
@@ -938,10 +942,13 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                 #Fill regions of new arrays with relevant data
                 new_t[ind[0]:ind[1]] -= 1       #Sets user defined regions of array to 0
                 linear_replace[ind[0]:ind[1]] = np.linspace(np.abs(D230831B_5_trans[ind[0]]), np.abs(D230831B_5_trans[ind[1]]), ind[1] - ind[0])  #Sets user defined regions of array to a linear approximation between endpoints of D230831B_5_trans
-                
-                
-                plt.plot(1e-4*D230831B_5_f_array[ind[0]:ind[1]]*2*c.e/c.h, 1e-6*np.abs(D230831B_5_trans[ind[0]:ind[1]]), linestyle = '--', c = 'r')
-                
+    
+                if PlotIFFTXX == True:
+                    if z == 0:
+                        plt.figure()
+                    plt.plot(1e-4*D230831B_5_f_array[ind[0]:ind[1]]*2*c.e/c.h, 1e-6*np.abs(D230831B_5_trans[ind[0]:ind[1]]), linestyle = '--', c = 'r')
+                z += 1
+
             
             if replace == "Zeros":    
                 new_t = new_t * D230831B_5_trans
@@ -949,35 +956,60 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                 new_t = (new_t * D230831B_5_trans) + linear_replace
             else:
                 raise NameError('Invalid choice of "replace", see top of Parallel_Subband_Inversion_Analysis')
-                
-            plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2*c.e/c.h, 1e-6*np.abs(new_t[fft_start:fft_cutoff]))
-            plt.xlim([0,5e11])
-            plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg, precision=4, trim='-') + ' mV')
-            plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
-                     xy=[0.65,0.8],
-                     xycoords='axes fraction')
-            plt.ylabel(r'FFT Amplitude')
-            plt.legend(["Removed Data"])
-            plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
+            
+            
+            
+            
+            
+            if PlotIFFTXX == True:
+                plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2*c.e/c.h, 1e-6*np.abs(new_t[fft_start:fft_cutoff]))
+                plt.xlim([0, 7e11])
+                plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg, precision=4, trim='-') + ' mV')
+                plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                         xy=[0.65,0.8],
+                         xycoords='axes fraction')
+                plt.ylabel(r'FFT Amplitude')
+                plt.legend(["Removed Data"])
+                plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
+    
 
-            #NOW: Inverse rFFT new_t with x axis as D230831B_5_f_array[fft_start:fft_cutoff]
 
+
+            ############Inverse rFFT new_t with x axis as D230831B_5_f_array[fft_start:fft_cutoff]###################
             inverted_trans = ft.irfft(new_t)
-            #inverted_trans = ft.irfft(D230831B_5_trans)
-
-            plt.figure()
-            plt.title("Inverted FFT with peaks removed")
-            plt.xlabel("1/B $(T^{-1})$")
-            if gradient == True:
-                plt.ylabel("Deriv. of Rxx")
-            else:
-                plt.ylabel("Rxx")
-            plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
-                     xy=[0.65,0.95],
-                     xycoords='axes fraction')
-            plt.plot(1/D230831B_5_B_inv, inverted_trans[:len(D230831B_5_R_inv)])
 
 
+            if PlotIFFTXX == True:
+                plt.figure()
+                plt.title("Inverted FFT with peaks removed")
+                plt.xlabel("1/B $(T^{-1})$")
+                if gradient == True:
+                    plt.ylabel("Deriv. of Rxx")
+                else:
+                    plt.ylabel("Rxx")
+                plt.ylim(np.min(D230831B_5_R_inv), np.max(D230831B_5_R_inv))
+                plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                         xy=[0.65,0.95],
+                         xycoords='axes fraction')
+                plt.plot(1/D230831B_5_B_inv, inverted_trans[:len(D230831B_5_R_inv)], c = 'r')
+                
+            
+            
+                ###PLOT post-processed Rxx data and post peak-removal inverse FFT data on same graph##########
+                
+                plt.figure()
+                plt.title("Rxx vs 1/B results")
+                plt.xlabel("1/B $(T^{-1})$")
+                if gradient == True:
+                    plt.ylabel("Deriv. of Rxx")
+                else:
+                    plt.ylabel("Rxx")
+                plt.plot(1/D230831B_5_B_inv, D230831B_5_R_inv, c = 'b', label = "Original Rxx input")
+                plt.plot(1/D230831B_5_B_inv, inverted_trans[:len(D230831B_5_R_inv)], c= 'r', label = "Inverse of altered FFT")
+                plt.legend()
+            
+            
+            
         if SaveFFTXX == True:
             if lockin2XX == False:
                 plt.annotate(text=r"$Rxx2$ from Lock-In 3",
@@ -998,18 +1030,18 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         
         
         #Gradient Dataframe
-        Rxx_grad = 0
-        Rxx_grad = pd.DataFrame({'B_field': D230831B_5_B_inv,
-                            'Rxx_grad': D230831B_5_R_inv})
-        Rxx_grad.sort_values(by='B_field',inplace=True,ignore_index=True)
+        Rxx_input = 0
+        Rxx_input = pd.DataFrame({'B_field': D230831B_5_B_inv,
+                            'Rxx_input': D230831B_5_R_inv})
+        Rxx_input.sort_values(by='B_field',inplace=True,ignore_index=True)
     
       
     if PlotFFTXX == 0:
         FFT = None                 #Need to return something
-        Rxx_grad = None
+        Rxx_input = None
         
         
-    return inv, FFT, Rxx_grad, nu_bounds
+    return inv, FFT, Rxx_input, nu_bounds
 
 def get_closests(df, col, val):
     '''

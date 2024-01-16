@@ -5,18 +5,11 @@ Created on Sat Oct 28 14:36:14 2023
 @author: Madma
 """
 
-import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.figure as fig
 import numpy as np
-from scipy import optimize as opt
-from scipy import stats as st
 from scipy import fft as ft
-from scipy import signal as sig
-import scipy.constants as c
-import os
-from operator import index, indexOf
 import D181211A1_QHE_Fourier_Analysis as QFT
 import Parallel_Subband_Inversion_Analysis as PSIA
 
@@ -32,6 +25,8 @@ import Parallel_Subband_Inversion_Analysis as PSIA
     #######FIX _3 CONTACT PLOT
     #They are all differ Rxx configurations, need to label plots as such
 
+
+#TO DO: ADD WATERFALL PLOT (3D Contour plot)
 
 '''
 ###########################
@@ -92,8 +87,8 @@ if __name__ == "__main__":
                 #default_bool = True will default grab data files ending in "_4_" as these files have lockin2 measuring Rxx
                 #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
              
-        inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, gradient = grad, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                            B_start = 0.1, B_end = 0.52)
+        inv, FFT, Rxx_input, nu_bounds = PSIA.ParallelAnalysis(Vg = Vg_val, lockin2XX = lockin2xx_bool, gradient = grad, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+                                            B_start = 0.1, B_end = 0.499)
             
 
     if type(Vg_val) == list:
@@ -109,7 +104,7 @@ if __name__ == "__main__":
                 #default_bool = True will default grab data files ending in "_4_" as these files have lockin2 measuring Rxx
                 #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
                 
-            inv, FFT, Rxx_grad, nu_bounds = PSIA.ParallelAnalysis(Vg = GV, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+            inv, FFT, Rxx_input, nu_bounds = PSIA.ParallelAnalysis(Vg = GV, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
                                                     B_start = 0.1, B_end = 3.0)
 
 

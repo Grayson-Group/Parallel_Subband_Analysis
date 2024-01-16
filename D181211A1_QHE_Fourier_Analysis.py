@@ -1,12 +1,9 @@
 ### QHE Data plotting sample D181211Ai, date 8/3/23
-import csv
 import math
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.figure as fig
 import numpy as np
-from scipy import optimize as opt
-from scipy import stats as st
 from scipy import fft as ft
 from scipy import signal as sig
 import scipy.constants as c
