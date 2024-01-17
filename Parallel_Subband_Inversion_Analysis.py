@@ -154,11 +154,11 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     
     
     smoothing = 1        ###Option to smooth jaggady low B data before performing FFT
-    apodization = 2      ###CAN BE 0, 1, 2, or 3: Defines order of NB apodization to apply to Rxx vs 1/B data. Apodization = 0 means NO apodization
-    pad_zeros = 0        ###Do you want to pad post-processed Rxx and B data with zeros to a user defined start point?
+    apodization = 1      ###CAN BE 0, 1, 2, or 3: Defines order of NB apodization to apply to Rxx vs 1/B data. Apodization = 0 means NO apodization
+    pad_zeros = 1        ###Do you want to pad post-processed Rxx and B data with zeros to a user defined start point?
     
     
-    rotate = 0           ###Rotate FFT results of post-processed Rxx data by a user defined Omega in complex plane
+    rotate = 1           ###Rotate FFT results of post-processed Rxx data by a user defined Omega in complex plane
     if rotate == 1:
         translate = 1    ###After rotation, do you want to translate the end of inverse FFT results to the negative x-axis?
     
@@ -594,7 +594,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
             
             #Take desired range of data, run preliminary data adjustments
-            D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=1, background_mode="points",extra_point_inds=200, start_point=window[0],
+            D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=2, background_mode = "fit", extra_point_inds=200, start_point=window[0],
                                                             chop_point = window[1], invert=False, show_plot=True)
             
 
@@ -602,10 +602,10 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
             
             if Rxx_1or2 == 1:
-                D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx"], order=1, background_mode="points",extra_point_inds=200, start_point=window[0],
+                D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx"], order=2, background_mode="fit",extra_point_inds=200, start_point=window[0],
                                                         chop_point = window[1], invert=False, show_plot=True)
             if Rxx_1or2 == 2:
-                D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx2"], order=1, background_mode="points",extra_point_inds=200, start_point=window[0],
+                D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx2"], order=2, background_mode="fit",extra_point_inds=200, start_point=window[0],
                                                         chop_point = window[1], invert=False, show_plot=True)
             
 
@@ -701,18 +701,14 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         D230831B_5_R_inv = QFT.apod_NB(D230831B_5_R_inv, D230831B_5_B_inv, order = apodization, show_plot=True, invert=False)
         
         
-        
-        
-        
-        
+        OneOver_B_inv = 1/D230831B_5_B_inv
+        spacing = np.round(OneOver_B_inv[1] - OneOver_B_inv[0], 5) #Calculate spacing between datapoints in 1/B
+                                                                        #I am assuming that OneOver_B_inv is already evenly spaced
+
         ####PAD ZEROS in 1/B TO USER DEFINED START POINT "pad_start"
         if pad_zeros == True:
             pad_start = 0    #Enter start value of padding in 1/B
             
-            OneOver_B_inv = 1/D230831B_5_B_inv
-            
-            spacing = np.round(OneOver_B_inv[1] - OneOver_B_inv[0], 5) #Calculate spacing between datapoints in 1/B
-                                                                        #I am assuming that OneOver_B_inv is already evenly spaced
             num_spacing = int(np.round((OneOver_B_inv[0]-pad_start)/spacing))
             new_B = np.linspace(pad_start + spacing, OneOver_B_inv[0]-spacing, num_spacing - 1)
             added_length = len(new_B)
@@ -741,7 +737,12 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
 
         print("\n\nPerforming FFT of Rxx vs 1/B")
        
-        D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(1/D230831B_5_B_inv, D230831B_5_R_inv, power = 17)
+        if smoothing == True:
+            power = 17
+        else:
+            power = 13
+       
+        D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(1/D230831B_5_B_inv, D230831B_5_R_inv, power)
         
         
         
@@ -776,7 +777,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "Real")
         ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "Imag")
         ax1.set_xlabel("B ($T$)")
-        ax1.set_xlim(0,10)
+        ax1.set_xlim(0, 10)
         
         
         #Create x-axis copy to show B field frequency breakdown
@@ -785,13 +786,8 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         title = ax1.set_title("Final FFT results")
         title.set_y(1.1)
         
-        '''
-        ax2 = ax1.twiny()
-        ax2.set_xbound(ax1.get_xbound())
-        ax2.set_xticks(ax1.get_xticks())
-        ax2.set_xticklabels(np.round((x/((2*c.e/c.h)*1e-4)), 3) for x in ax1.get_xticks())   #Convert carrier concentration back to B
-        ax2.set_xlabel("B $(T)$")
-        '''
+        secax = ax1.secondary_xaxis('top', functions=(QFT.B_to_n, QFT.n_to_B))
+        secax.set_xlabel("Carrier Conc. ($cm^{-2}$)")
         
         
         
@@ -839,29 +835,23 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             fft_start = 0
             fft_cutoff = -1
             
-            plt.figure()
-            #plt.plot(1e-4*(2*c.e/c.h)*D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(rotated_FFT[fft_start:fft_cutoff]), c='b', label = "Real")
-            #plt.plot(1e-4*(2*c.e/c.h)*D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(rotated_FFT[fft_start:fft_cutoff]), c='r', label = "Imag")
-            #plt.xlabel("Carrier Conc ($n cm^{-2}$)")
-            
-            plt.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.abs(rotated_FFT[fft_start:fft_cutoff]), c="black", linestyle = '--', label = "Magn")
-            plt.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(rotated_FFT[fft_start:fft_cutoff]), c='b', label = "Real")
-            plt.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(rotated_FFT[fft_start:fft_cutoff]), c='r', label = "Imag")
-            plt.xlabel("B (${T}$)")
-    
-            
-    
-            plt.ylabel(r'FFT Amplitude')
-            plt.legend(loc = "lower right")
-            plt.annotate(text = "Rotated with frequency of: \n" + f"{omega/(2*c.pi):f}" + " $T^{-1}$", 
+            graph, ax1 = plt.subplots()
+
+             
+            ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.abs(rotated_FFT[fft_start:fft_cutoff]), c="black", linestyle = '--', label = "Magn")
+            ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(rotated_FFT[fft_start:fft_cutoff]), c='b', label = "Real")
+            ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(rotated_FFT[fft_start:fft_cutoff]), c='r', label = "Imag")
+            ax1.set_xlabel("B (${T}$)")
+            ax1.set_ylabel(r'FFT Amplitude')
+            ax1.legend(loc = "lower right")
+            ax1.annotate(text = "Rotated with frequency of: \n" + f"{omega/(2*c.pi):f}" + " $T^{-1}$", 
                          xy=[0.45,0.85],
                          xycoords='axes fraction')
-            plt.title("Rotated FFT results")
+            ax1.set_title("Rotated FFT results")
+            ax1.set_xlim(0,10)
             
-            plt.xlim(0,10)
-            #plt.xlim(0,5e11)
-            
-            
+            secax = ax1.secondary_xaxis('top', functions=(QFT.B_to_n, QFT.n_to_B))
+            secax.set_xlabel("Carrier Conc. ($cm^{-2}$)")
             
             
             
@@ -924,7 +914,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             #region = [[0, 3.7e11], [4.2e11, 1e15]]  #Define regions using CARRIER CONC. in cm^-2
             #region = [[1.79e11, 2.3e11], [3.7e11, 4.2e11], [5.7e11, 6.2e11]]
             
-            region = [[0, 1.79e11], [2.3e11, 3.7e11], [4.2e11, 5.7e11], [6.2e11, 1e15]]
+            region = [[0.1e11, 1.79e11], [2.3e11, 3.7e11], [4.2e11, 5.7e11], [6.2e11, 1e15]]
             
             
             #use new_t array to copy all FFT data, but replace defined regions with zeros
@@ -945,8 +935,8 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     
                 if PlotIFFTXX == True:
                     if z == 0:
-                        plt.figure()
-                    plt.plot(1e-4*D230831B_5_f_array[ind[0]:ind[1]]*2*c.e/c.h, 1e-6*np.abs(D230831B_5_trans[ind[0]:ind[1]]), linestyle = '--', c = 'r')
+                        graph, ax1 = plt.subplots()
+                    ax1.plot(D230831B_5_f_array[ind[0]:ind[1]], 1e-6*np.abs(D230831B_5_trans[ind[0]:ind[1]]), linestyle = '--', c = 'r')
                 z += 1
 
             
@@ -962,16 +952,19 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             
             
             if PlotIFFTXX == True:
-                plt.plot(1e-4*D230831B_5_f_array[fft_start:fft_cutoff]*2*c.e/c.h, 1e-6*np.abs(new_t[fft_start:fft_cutoff]))
-                plt.xlim([0, 7e11])
-                plt.title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg, precision=4, trim='-') + ' mV')
-                plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.abs(new_t[fft_start:fft_cutoff]))
+                ax1.set_title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg, precision=4, trim='-') + ' mV')
+                ax1.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
                          xy=[0.65,0.8],
                          xycoords='axes fraction')
-                plt.ylabel(r'FFT Amplitude')
-                plt.legend(["Removed Data"])
-                plt.xlabel(r"$n_\mathrm{2D}$ (cm$^{-2}$)")
-    
+                ax1.set_ylabel(r'FFT Amplitude')
+                ax1.set_xlabel(r"$B$ ($T$)")
+                ax1.legend(["Removed Data"])
+                ax1.set_xlim([0, 10])
+
+                secax = ax1.secondary_xaxis('top', functions=(QFT.B_to_n, QFT.n_to_B))
+                secax.set_xlabel("Carrier Conc. ($cm^{-2}$)")
+                
 
 
 

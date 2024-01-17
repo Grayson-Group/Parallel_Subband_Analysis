@@ -147,7 +147,17 @@ def IndofX(data, target):
     min_index = indexOf(np.abs(data - target), min_val)
     return int(min_index)
 
-
+def B_to_n(x):
+    '''Convert magnetic field (in Tesla) to carrier concentration (cm^-2)'''
+    
+    return x*(2*c.e/c.h)*1e-4
+    
+    
+    
+def n_to_B(x):
+    '''Convert carrier concentration (cm^-2) to magnetic field (T)'''
+    
+    return x/((2*c.e/c.h)*1e-4)
 def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point_inds=[],window_slices=[],start_point=0,chop_point=0,invert=False,show_plot=False):
 
     if "xx" in R_ind:
@@ -202,12 +212,13 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
 
         if show_plot:
             plt.figure()
-            plt.plot(B_pos,R_pos,color="b",label=r"$R_\mathrm{Long}$")
+            plt.plot(B_pos,R_pos,color="b",label=r"$R_\mathrm{xx}$")
             plt.plot(B_pos, R_pos - back_fun,color="k")
             plt.plot(B_pos, back_fun,color="r",label=r"BackgroundFunction")
             plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
             plt.xlabel(r"$B$ (T)")
-            plt.title(r"Resistance after 1st order background subtraction")
+            plt.title("Resistance after {} order background subtraction".format(order))
+            
         # print(R_0,R_pos[0])
         # R_pos -= R_0
         # R_pos -= 0.9*lin_fit[0]*(B_pos-B_0)
