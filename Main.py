@@ -7,11 +7,12 @@ Created on Sat Oct 28 14:36:14 2023
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.figure as fig
+#import matplotlib.figure as fig
 import numpy as np
 from scipy import fft as ft
 import D181211A1_QHE_Fourier_Analysis as QFT
 import Parallel_Subband_Inversion_Analysis as PSIA
+from mpl_toolkits.mplot3d import axes3d
 
 ######
 #TO DO:
@@ -48,7 +49,7 @@ if __name__ == "__main__":
                         #Should be an int that is an element of lockin4_Vgs or lockin2_Vgs
                         #OR it can be a list of int which are elements of lockin4_Vgs or lockin2_Vgs
                         #OR it can be a string for specialized data files
-    Vg_val = 000                   
+    Vg_val = [000, 100]                   
     #Vg_val = "D230831B_4_Last_"                       
 #                                   List of Specialized Data Files 
                         #D230831B_3_Contacts_000mV_Vg.dat                  Vg_val = "D230831B_3_Contacts_"
@@ -104,8 +105,8 @@ if __name__ == "__main__":
                 #default_bool = True will default grab data files ending in "_4_" as these files have lockin2 measuring Rxx
                 #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
                 
-            inv, FFT, Rxx_input, nu_bounds = PSIA.ParallelAnalysis(Vg = GV, lockin2XX = lockin2xx_bool, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
-                                                    B_start = 0.1, B_end = 3.0)
+            inv, FFT, Rxx_input, nu_bounds = PSIA.ParallelAnalysis(Vg = GV, lockin2XX = lockin2xx_bool, gradient = grad, Rxx_1or2 = Rxx, I = 2e-6, Iscaler = 0.9701, Rotate = Rotate_list, ne = 4E15, 
+                                                    B_start = 0.1, B_end = 0.51)
 
 
 
@@ -114,18 +115,52 @@ if __name__ == "__main__":
             #fft_cutoff = -1
             
             if i == 0:
-                R_data = np.empty((len(Vg_val),len(inv.B_field)))
-                spect_data = np.empty((len(Vg_val),len(FFT.f_array)))
-                B_data = np.empty(len(inv.B_field))
-                R_data[i,:] = inv.Rxx#/np.max(D230831B_6_data.Rxx_x)
-                B_data = inv.B_field
-                f_data = FFT.f_array
-                spect_data[i,:] = np.abs(FFT.Trans)/np.amax(np.abs(FFT.Trans))
+                Trans = np.empty((len(Vg_val), len(FFT.f_array)))
+                f_array = np.empty((len(Vg_val), len(FFT.f_array)))
+                gate_val = np.empty((len(Vg_val), len(FFT.f_array)))
+                
+                Trans[i,:] = FFT.Trans                
+                f_array[i,:] = FFT.f_array
+                gate_val[i,:].fill(Vg_val[i])
+                #R_data = np.empty((len(Vg_val),len(inv.B_field)))
+                #f_data = np.empty((len(Vg_val), len(FFT.f_array)))
+                #spect_data = np.empty((len(Vg_val),len(FFT.f_array)))
+                #B_data = np.empty(len(inv.B_field))
+                #R_data[i,:] = inv.Rxx#/np.max(D230831B_6_data.Rxx_x)
+                #f_data[i,:] = FFT.f_array
+                #B_data = inv.B_field
+                #spect_data[i,:] = np.abs(FFT.Trans)/np.amax(np.abs(FFT.Trans))
             else: 
-                R_data[i,:] = np.interp(B_data[:],inv.B_field, inv.Rxx)
-                spect_data[i,:] = np.interp(f_data[:],FFT.f_array,np.abs(FFT.Trans)/np.amax(np.abs(FFT.Trans)))
-            i+= 1
+                Trans[i,:] = FFT.Trans                
+                f_array[i,:] = FFT.f_array
+                gate_val[i,:].fill(Vg_val[i])
 
+                
+                # R_data[i,:] = np.interp(B_data[:],inv.B_field, inv.Rxx)
+                #spect_data[i,:] = np.interp(f_data[:],FFT.f_array,np.abs(FFT.Trans)/np.amax(np.abs(FFT.Trans)))
+                #f_data[i,:] = FFT.f_array
+
+            i+= 1
+            
+            
+            
+        fig, ax1 = plt.subplots(1, 1, figsize=(8, 12), subplot_kw={'projection': '3d'})
+
+        ax1.plot_wireframe(f_array,  gate_val, np.abs(Trans), rstride=100, cstride=0)
+        ax1.set_title("Column (x) stride set to 0")
+        ax1.set_xlabel("Carrier Conc. ($cm^{-2}$)")
+        ax1.set_ylabel("Gate Voltage ($mV$)")
+        ax1.set_zlabel("FFT Amplitude")
+        
+        # Give the second plot only wireframes of the type x = c
+        #ax2.plot_wireframe(1e-4*f_data,  Vg_val, np.abs(spect_data), rstride=0, cstride=10)
+        #ax2.set_title("Row (y) stride set to 0")
+        
+        plt.tight_layout()
+        
+        
+        
+        '''
         plt.figure()
         plt.contourf(1e-4*f_data,  Vg_val, np.abs(spect_data))
         plt.xlim([0,5e11])
@@ -136,7 +171,7 @@ if __name__ == "__main__":
                      xycoords='axes fraction')
         plt.title("Gate Voltage, 1/B FFT, and FFT intensity ")
 
-        
+        '''
         
     
     plt.show()

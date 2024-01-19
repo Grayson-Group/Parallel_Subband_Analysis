@@ -153,19 +153,19 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     '''
     
     
-    smoothing = 1        ###Option to smooth jaggady low B data before performing FFT
-    apodization = 1      ###CAN BE 0, 1, 2, or 3: Defines order of NB apodization to apply to Rxx vs 1/B data. Apodization = 0 means NO apodization
-    pad_zeros = 1        ###Do you want to pad post-processed Rxx and B data with zeros to a user defined start point?
+    smoothing = 0       ###Option to smooth jaggady low B data before performing FFT
+    apodization = 3      ###CAN BE 0, 1, 2, or 3: Defines order of NB apodization to apply to Rxx vs 1/B data. Apodization = 0 means NO apodization
+    pad_zeros = 0        ###Do you want to pad post-processed Rxx and B data with zeros to a user defined start point?
     
     
-    rotate = 1           ###Rotate FFT results of post-processed Rxx data by a user defined Omega in complex plane
+    rotate = 0           ###Rotate FFT results of post-processed Rxx data by a user defined Omega in complex plane
     if rotate == 1:
         translate = 1    ###After rotation, do you want to translate the end of inverse FFT results to the negative x-axis?
     
     
-    RemoveFFTSpikes = 1  ###User defines regions of FFT to remove, then FFT is inverted back to Rxx vs. 1/B data
+    RemoveFFTSpikes = 0  ###User defines regions of FFT to remove, then FFT is inverted back to Rxx vs. 1/B data
     if RemoveFFTSpikes == 1:
-        replace = "Zeros"      #Set to "Linear" OR "Zeros". When user defined spikes in the FFT are removed, 
+        replace = "Linear"      #Set to "Linear" OR "Zeros". When user defined spikes in the FFT are removed, 
                                         #do you want the spikes to be replaced with "Zeros" or a "Linear" fit between endpoints?
     
     
@@ -910,12 +910,14 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             
             
             ###### USER DEFINED REGIONS OF DATA TO ERASE ########
-            #region = [[0, 1.79e11], [2.3e11, 1e15]]  #Define regions using CARRIER CONC. in cm^-2
-            #region = [[0, 3.7e11], [4.2e11, 1e15]]  #Define regions using CARRIER CONC. in cm^-2
+            #Define regions using CARRIER CONC. in cm^-2
+            #region = [[0, 1.79e11], [2.3e11, 1e15]]  
+            #region = [[0, 3.7e11], [4.2e11, 1e15]]  
             #region = [[1.79e11, 2.3e11], [3.7e11, 4.2e11], [5.7e11, 6.2e11]]
             
-            region = [[0.1e11, 1.79e11], [2.3e11, 3.7e11], [4.2e11, 5.7e11], [6.2e11, 1e15]]
-            
+            #region = [[0, 1.79e11], [2.3e11, 3.7e11], [4.2e11, 5.7e11], [6.2e11, 1e15]]
+            region = [[1.79e11,2.3e11] , [3.7e11, 4.2e11] , [5.7e11, 6.2e11]]
+
             
             #use new_t array to copy all FFT data, but replace defined regions with zeros
             new_t = np.ones(len(D230831B_5_trans))
