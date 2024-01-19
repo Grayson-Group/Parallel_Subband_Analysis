@@ -4,7 +4,7 @@ Created on Sat Oct 28 14:36:14 2023
 
 @author: Madma
 """
-
+import scipy.constants as c
 import pandas as pd
 import matplotlib.pyplot as plt
 #import matplotlib.figure as fig
@@ -49,7 +49,7 @@ if __name__ == "__main__":
                         #Should be an int that is an element of lockin4_Vgs or lockin2_Vgs
                         #OR it can be a list of int which are elements of lockin4_Vgs or lockin2_Vgs
                         #OR it can be a string for specialized data files
-    Vg_val = [000, 100]                   
+    Vg_val = [000, 100, 150, 175, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 450, 500, 550, 600]                   
     #Vg_val = "D230831B_4_Last_"                       
 #                                   List of Specialized Data Files 
                         #D230831B_3_Contacts_000mV_Vg.dat                  Vg_val = "D230831B_3_Contacts_"
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             lockin2xx_bool = True   #All specialty files use lockin 2 to measure Rxx
         
         if type(Vg_val) == int:
-            lockin2xx_bool = QFT.determine_Rxx_lockin(gate_val = Vg_val, default_bool = True)  #Determine if lockin2 measures Rxx or Rxy  
+            lockin2xx_bool = QFT.determine_Rxx_lockin(gate_val = Vg_val, default_bool = False)  #Determine if lockin2 measures Rxx or Rxy  
                 #default_bool = True will default grab data files ending in "_4_" as these files have lockin2 measuring Rxx
                 #default_bool = False will default grab data files ending in "_2_" as these files have lockin2 measuring Rxy
              
@@ -115,7 +115,8 @@ if __name__ == "__main__":
             #fft_cutoff = -1
             
             if i == 0:
-                Trans = np.empty((len(Vg_val), len(FFT.f_array)))
+                
+                Trans = np.empty((len(Vg_val), len(FFT.f_array)), dtype = np.complex128)
                 f_array = np.empty((len(Vg_val), len(FFT.f_array)))
                 gate_val = np.empty((len(Vg_val), len(FFT.f_array)))
                 
@@ -146,11 +147,12 @@ if __name__ == "__main__":
             
         fig, ax1 = plt.subplots(1, 1, figsize=(8, 12), subplot_kw={'projection': '3d'})
 
-        ax1.plot_wireframe(f_array,  gate_val, np.abs(Trans), rstride=100, cstride=0)
+        ax1.plot_wireframe(f_array*(2*c.e/c.h)*1e-4,  gate_val, np.abs(Trans), rstride=1, cstride=0)
         ax1.set_title("Column (x) stride set to 0")
         ax1.set_xlabel("Carrier Conc. ($cm^{-2}$)")
         ax1.set_ylabel("Gate Voltage ($mV$)")
         ax1.set_zlabel("FFT Amplitude")
+        ax1.set_xlim(0,5e11)
         
         # Give the second plot only wireframes of the type x = c
         #ax2.plot_wireframe(1e-4*f_data,  Vg_val, np.abs(spect_data), rstride=0, cstride=10)
