@@ -158,7 +158,8 @@ def n_to_B(x):
     '''Convert carrier concentration (cm^-2) to magnetic field (T)'''
     
     return x/((2*c.e/c.h)*1e-4)
-def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point_inds=[],window_slices=[],start_point=0,chop_point=0,invert=False,show_plot=False):
+def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point_inds=[],window_slices=[],
+                 start_point=0,chop_point=0,invert=False,show_plot=False):
 
     if "xx" in R_ind:
         R_dat = data_struct.Rxx_x
@@ -218,6 +219,7 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
             plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
             plt.xlabel(r"$B$ (T)")
             plt.title("Resistance after {} order background subtraction".format(order))
+            
             
         # print(R_0,R_pos[0])
         # R_pos -= R_0

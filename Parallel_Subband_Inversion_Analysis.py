@@ -657,7 +657,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                 plt.plot(D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "imaginary")
                 plt.legend(loc = "lower right")
                 
-                plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=2)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=2)+r"T]",
                              xy=[0.65,0.95],
                              xycoords='axes fraction')
                 plt.annotate(text=r"$T$ = 20 mK",
@@ -956,7 +956,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             if PlotIFFTXX == True:
                 ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.abs(new_t[fft_start:fft_cutoff]))
                 ax1.set_title(r'FFT in 1/B of Processed $R_\mathrm{xx}$ (20 mK), sample D230831B_5, $V_\mathrm{g}$ = ' + np.format_float_positional(Vg, precision=4, trim='-') + ' mV')
-                ax1.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                ax1.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=2)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=2)+r"T]",
                          xy=[0.65,0.8],
                          xycoords='axes fraction')
                 ax1.set_ylabel(r'FFT Amplitude')
@@ -983,7 +983,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                 else:
                     plt.ylabel("Rxx")
                 plt.ylim(np.min(D230831B_5_R_inv), np.max(D230831B_5_R_inv))
-                plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
+                plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=2)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=2)+r"T]",
                          xy=[0.65,0.95],
                          xycoords='axes fraction')
                 plt.plot(1/D230831B_5_B_inv, inverted_trans[:len(D230831B_5_R_inv)], c = 'r')
