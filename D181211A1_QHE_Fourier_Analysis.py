@@ -38,9 +38,10 @@ def get_csv_data(file_path : str,file_name: str,R_ind : list, VoverI = 1/(1e-6))
     return data
 
 
-def get_dat_data(file_path : str, file_name: str, R_ind : list, lockin2XX: bool, 
+def get_dat_data(file_path : str, file_name: str, R_ind : list, lockin2XX: bool, NU: bool,
                  VoverI = 1/(1e-6), has_header=False, data_headings =[]):
-    '''data headings_format: [An_Field, Rxx_x, Rxx_y, Rxy_x, Rxy_y]'''
+    '''data headings_format: [An_field, Rxx_x, Rxx_y, Rxy_x, Rxy_y]'''
+   
     os.chdir(file_path)
     # data = pd.read_fwf(file_name,infer_nrows=5,delim_whitespace=True)
     if data_headings == []:
@@ -63,33 +64,47 @@ def get_dat_data(file_path : str, file_name: str, R_ind : list, lockin2XX: bool,
         if has_header == False:
             data = pd.read_table(file_name,delimiter="\t",header=None,names=data_headings)
             # print(data)
-            # data headings_format: [An_Field, Rxx_x, Rxx_y, Rxy_x, Rxy_y]
+            # data headings_format: [An_field, Rxx_x, Rxx_y, Rxy_x, Rxy_y]
 
         elif has_header == True:
-            if lockin2XX == False:
-                data = pd.read_table(file_name,header=0)
-                data['An_Field'] = data[data_headings[0]]  # data_headings 0 = An_field
-                data['Rxx_x'] = data[data_headings[1]] * VoverI    # data_headings 1 = Rxx_x
-                data['Rxx_y'] = data[data_headings[2]] * VoverI    # data_headings 2 = Rxx_y
-                data['Rxy_x'] = data[data_headings[3]] * VoverI * -1    # data_headings 3 = Rxy_x
-                data['Rxy_y'] = data[data_headings[4]] * VoverI * -1   # data_headings 4 = Rxy_y
+            
+            if NU == False:   #Extract data according to ETH specifications
+                if lockin2XX == False:
+                    data = pd.read_table(file_name,header=0)
+                    data['An_field'] = data[data_headings[0]]  # data_headings 0 = An_field
+                    data['Rxx_x'] = data[data_headings[1]] * VoverI    # data_headings 1 = Rxx_x
+                    data['Rxx_y'] = data[data_headings[2]] * VoverI    # data_headings 2 = Rxx_y
+                    data['Rxy_x'] = data[data_headings[3]] * VoverI * -1    # data_headings 3 = Rxy_x
+                    data['Rxy_y'] = data[data_headings[4]] * VoverI * -1   # data_headings 4 = Rxy_y
+                    
+                    if len(data_headings) > 5:
+                        data['Rxx_x2'] = data[data_headings[5]] * VoverI    # data_headings 5 = Rxx_x
+                        data['Rxx_y2'] = data[data_headings[6]] * VoverI    # data_headings 6 = Rxx_y
+               
+                if lockin2XX == True:   
+                    data = pd.read_table(file_name,header=0)
+                    data['An_field'] = data[data_headings[0]]  # data_headings 0 = An_field
+                    data['Rxx_x'] = data[data_headings[1]] * VoverI    # data_headings 1 = Rxx_x
+                    data['Rxx_y'] = data[data_headings[2]] * VoverI    # data_headings 2 = Rxx_y
+                    data['Rxy_x'] = data[data_headings[5]] * VoverI    # data_headings 5 = Rxy_x
+                    data['Rxy_y'] = data[data_headings[6]] * VoverI    # data_headings 6 = Rxy_y
+                    
+                    if len(data_headings) > 5:
+                        data['Rxx_x2'] = data[data_headings[3]] * VoverI    # data_headings 3 = Rxx_x
+                        data['Rxx_y2'] = data[data_headings[4]] * VoverI    # data_headings 4 = Rxx_y
+        
+            if NU == True:
                 
-                if len(data_headings) > 5:
-                    data['Rxx_x2'] = data[data_headings[5]] * VoverI    # data_headings 5 = Rxx_x
-                    data['Rxx_y2'] = data[data_headings[6]] * VoverI    # data_headings 6 = Rxx_y
-           
-            if lockin2XX == True:   
-                data = pd.read_table(file_name,header=0)
-                data['An_Field'] = data[data_headings[0]]  # data_headings 0 = An_field
-                data['Rxx_x'] = data[data_headings[1]] * VoverI    # data_headings 1 = Rxx_x
-                data['Rxx_y'] = data[data_headings[2]] * VoverI    # data_headings 2 = Rxx_y
-                data['Rxy_x'] = data[data_headings[5]] * VoverI    # data_headings 5 = Rxy_x
-                data['Rxy_y'] = data[data_headings[6]] * VoverI    # data_headings 6 = Rxy_y
+                data = pd.read_csv(file_name, header=0)
                 
-                if len(data_headings) > 5:
-                    data['Rxx_x2'] = data[data_headings[3]] * VoverI    # data_headings 3 = Rxx_x
-                    data['Rxx_y2'] = data[data_headings[4]] * VoverI    # data_headings 4 = Rxx_y
-        data.sort_values(data_headings[0],0,inplace=True)
+                #data = pd.read_table(file_name,header=0)
+                data['An_field'] = data.An_Field  # data_headings 0 = An_field
+                data['Rxx_x'] = data.Vxx_x * VoverI    # data_headings 1 = Rxx_x
+                data['Rxx_y'] = data.Vxx_y * VoverI    # data_headings 2 = Rxx_y
+                data['Rxy_x'] = data.Vxy_x * VoverI    # data_headings 3 = Rxy_x
+                data['Rxy_y'] = data.Vxy_y * VoverI    # data_headings 4 = Rxy_y
+        
+        data.sort_values('An_field',0,inplace=True)
 
         # print(data)
         
@@ -173,12 +188,14 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
         R_dat = data_struct.Ryx_x
     elif "xx_grad" in R_ind:
         R_dat = data_struct.Rxx_grad
+    elif "sigma_xx" in R_ind:
+        R_dat = data_struct.sigma_xx
 
     
     
     if invert:
-        B_pos = np.array(data_struct.An_Field[data_struct.An_Field < 0])[start_point:chop_point:-1]
-        R_pos = np.array(R_dat[data_struct.An_Field < 0])[start_point:chop_point:-1]
+        B_pos = np.array(data_struct.An_field[data_struct.An_field < 0])[start_point:chop_point:-1]
+        R_pos = np.array(R_dat[data_struct.An_field < 0])[start_point:chop_point:-1]
         
 
         B_0 = np.amax(B_pos)
@@ -187,8 +204,8 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
         R_end = RofB(R_pos,B_pos,B_end)
 
     else:
-        B_pos = np.array(data_struct.An_Field[data_struct.An_Field > 0])[chop_point:start_point]
-        R_pos = np.array(R_dat[data_struct.An_Field > 0])[chop_point:start_point]
+        B_pos = np.array(data_struct.An_field[data_struct.An_field > 0])[chop_point:start_point]
+        R_pos = np.array(R_dat[data_struct.An_field > 0])[chop_point:start_point]
         
         
         B_0 = np.amin(B_pos)
@@ -216,9 +233,15 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
             plt.plot(B_pos,R_pos,color="b",label=r"$R_\mathrm{xx}$")
             plt.plot(B_pos, R_pos - back_fun,color="k")
             plt.plot(B_pos, back_fun,color="r",label=r"BackgroundFunction")
-            plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
+            if "sigma_xx" in R_ind:
+                plt.ylabel(r"$\sigma_{\rm xx}$ $\mathrm{(\Omega m)^{-1}}$")
+                plt.title("Conductivity after {} order background subtraction".format(order))
+                
+            else:
+                plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
+                plt.title("Resistance after {} order background subtraction".format(order))
+                
             plt.xlabel(r"$B$ (T)")
-            plt.title("Resistance after {} order background subtraction".format(order))
             
             
         # print(R_0,R_pos[0])
@@ -244,13 +267,16 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
 
         if show_plot:
             plt.figure()
-            plt.title("Gradient of Rxx VS 1/B")
+            plt.title("Signal in 1/B")
             plt.plot(1/B_pos, R_pos)
             plt.plot((1/B_pos[:inner_index[0]]), R_pos[:inner_index[0]], 'g', label = "Averaging Areas") #"Right side" averaging range in 1/B
             plt.plot((1/B_pos[inner_index[1]:]), R_pos[inner_index[1]:], 'g') #"Left side" averaging range in 1/B
             plt.plot(1/B_pos, lin_fit, 'r--', label = "Linear fit")
             plt.xlabel("1/B $(T^{-1})$")
-            plt.ylabel("Rxx Gradient")
+            if "sigma_xx" in R_ind:
+                plt.ylabel(r"$\sigma_{\rm xx}$ ($\mathrm{(\Omega m)^{-1}}$)")
+            else:
+                plt.ylabel(r"Derivative of $R_{\rm xx}$ ($\mathrm{\Omega /T}$)")
             plt.legend()
             plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(np.round(np.min(B_pos), 1), unique = False, precision=1)+ r" T, "+np.format_float_positional(np.round(np.max(B_pos), 1), unique = False, precision=1)+r"T]",
                      xy=[0.65,0.95],
@@ -262,7 +288,10 @@ def apodize_data(data_struct,R_ind,order=1, background_mode="points",extra_point
             plt.title("Post-Linear Fit Subtraction")
             plt.plot(1/B_pos, post_sub)
             plt.xlabel("1/B $(T^{-1})$")
-            plt.ylabel("Rxx Gradient")
+            if "sigma_xx" in R_ind:
+                plt.ylabel(r"$\sigma_{\rm xx}$ ($\mathrm{(\Omega m)^{-1}}$)")
+            else:
+                plt.ylabel(r"Derivative of $R_{\rm xx}$ ($\mathrm{\Omega /T}$)")
             plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(np.round(np.min(B_pos), 1), unique = False, precision=1)+ r" T, "+np.format_float_positional(np.round(np.max(B_pos), 1), unique = False, precision=1)+r"T]",
                      xy=[0.65,0.95],
                      xycoords='axes fraction')
@@ -565,11 +594,11 @@ if __name__ == "__main__":
         for Vg in Vg_vals:
             file_name = "D230831B_5_inv_Bsweep_" + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
             # print(file_names[i])
-            D230831B_5_data = get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+            D230831B_5_data = get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
 
             Rxx_x = D230831B_5_data.Rxx_x[50:-50]
             Rxy_x = D230831B_5_data.Rxy_x[50:-50]
-            An_Field = D230831B_5_data.An_Field[50:-50]
+            An_field = D230831B_5_data.An_field[50:-50]
             Rxx_grad = np.empty(len(Rxx_x))
             Rxx_grad = np.gradient(Rxx_x)
             Rxy_grad = np.empty(len(Rxy_x))
@@ -582,14 +611,14 @@ if __name__ == "__main__":
             nu = 2
             rho_xx_par = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
             rho_xy_par = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-            inv = pd.DataFrame({'B_field': D230831B_5_data.An_Field,
+            inv = pd.DataFrame({'An_field': D230831B_5_data.An_field,
                                 'Rxx': D230831B_5_data.Rxx_x,
                                 'Rxy': D230831B_5_data.Rxy_x,
                                 'p_xx_tot': rho_xx_tot,
                                 'p_xy_tot': rho_xx_tot,
                                 'p_det_tot': rho_det_tot,
                                 })
-            inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+            inv.sort_values(by='An_field',inplace=True,ignore_index=True)
             nu_bounds = []
             nu_bounds.append((0,0)) # nu = 0
             nu_bounds.append((0,0)) # nu = 1
@@ -599,20 +628,20 @@ if __name__ == "__main__":
             plt.plot(inv.Rxx[nu_bounds[3][0]:nu_bounds[3][1]])
 
             plt.figure()
-            plt.plot(inv.B_field,inv.Rxx)
-            plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="b",label=r"$\nu$ = 2")
-            plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="r",label=r"$\nu$ = 3")
+            plt.plot(inv.An_field,inv.Rxx)
+            plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="b",label=r"$\nu$ = 2")
+            plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="r",label=r"$\nu$ = 3")
             plt.grid()
             plt.legend()
 
             # plt.figure()
-            # plt.plot(An_Field,Rxx_x/np.amax(Rxx_x),label=r"Rxx")
-            # plt.plot(An_Field,Rxx_grad/np.amax(Rxx_grad),label=r"dRxx")
-            # plt.plot(An_Field,Rxx_x/np.amax(Rxx_x) - Rxx_grad/np.amax(Rxx_grad),label=r"Rxx - dRxx")
-            # plt.plot(An_Field,Rxy_x/np.amax(Rxy_x),label=r"Rxy")
-            # print(inv.B_field[nu_bounds[1][0]])
-            # plt.plot(An_Field,Rxy_grad/np.amax(Rxy_grad),label=r"dRxy")
-            # plt.plot(An_Field,Rxy_x/np.amax(Rxy_x) - Rxy_grad/np.amax(Rxy_grad),label=r"Rxy - dRxy")
+            # plt.plot(An_field,Rxx_x/np.amax(Rxx_x),label=r"Rxx")
+            # plt.plot(An_field,Rxx_grad/np.amax(Rxx_grad),label=r"dRxx")
+            # plt.plot(An_field,Rxx_x/np.amax(Rxx_x) - Rxx_grad/np.amax(Rxx_grad),label=r"Rxx - dRxx")
+            # plt.plot(An_field,Rxy_x/np.amax(Rxy_x),label=r"Rxy")
+            # print(inv.An_field[nu_bounds[1][0]])
+            # plt.plot(An_field,Rxy_grad/np.amax(Rxy_grad),label=r"dRxy")
+            # plt.plot(An_field,Rxy_x/np.amax(Rxy_x) - Rxy_grad/np.amax(Rxy_grad),label=r"Rxy - dRxy")
             # plt.title(r"R_{xx} gradient")
             # plt.grid()
             # plt.legend()
@@ -645,7 +674,7 @@ if __name__ == "__main__":
 
         i=0
         for file in file_names:
-            D230831B_6_data = get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+            D230831B_6_data = get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
 
             # windows: [start_point, chop_point]
 
@@ -676,15 +705,15 @@ if __name__ == "__main__":
             fft_start = 0#3520
             fft_cutoff = -1#-3520
             if i == 0:
-                R_data = np.empty((len(Vg_vals),len(D230831B_6_data.An_Field)))
+                R_data = np.empty((len(Vg_vals),len(D230831B_6_data.An_field)))
                 spect_data = np.empty((len(Vg_vals),len(D230831B_6_f_array)))
-                B_data = np.empty(len(D230831B_6_data.An_Field))
+                B_data = np.empty(len(D230831B_6_data.An_field))
                 R_data[i,:] = D230831B_6_data.Rxx_x#/np.max(D230831B_6_data.Rxx_x)
-                B_data = D230831B_6_data.An_Field
+                B_data = D230831B_6_data.An_field
                 f_data = D230831B_6_f_array
                 spect_data[i,:] = np.abs(D230831B_6_trans)/np.amax(np.abs(D230831B_6_trans))
             else: 
-                R_data[i,:] = np.interp(B_data[:],D230831B_6_data.An_Field,D230831B_6_data.Rxx_x)
+                R_data[i,:] = np.interp(B_data[:],D230831B_6_data.An_field,D230831B_6_data.Rxx_x)
                 spect_data[i,:] = np.interp(f_data[:],D230831B_6_f_array,np.abs(D230831B_6_trans)/np.amax(np.abs(D230831B_6_trans)))
             i+= 1
         
@@ -748,16 +777,16 @@ if __name__ == "__main__":
 
         i=0
         for file in file_names:
-            D230831B_5_data = get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+            D230831B_5_data = get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
             # scaling_1 = 80e-4
             # knee = 800
             # scaling_2 = 7e-4
             # if Vg <=knee:
-            #     new_B = D230831B_5_data.An_Field / (scaling_1*Vg + 1)
+            #     new_B = D230831B_5_data.An_field / (scaling_1*Vg + 1)
             # else:
-            #     new_B = D230831B_5_data.An_Field / (scaling_2*(Vg - knee) + scaling_1*knee + 1)
+            #     new_B = D230831B_5_data.An_field / (scaling_2*(Vg - knee) + scaling_1*knee + 1)
 
-            # D230831B_5_data.An_Field = new_B
+            # D230831B_5_data.An_field = new_B
 
             # windows: [start_point, chop_point]
             # window = [-1,0] # Full curve
@@ -765,7 +794,7 @@ if __name__ == "__main__":
             # window = [-305,4030] # Spin-splitting oscillations
             # window = [-515,3500] # Non-split oscillations and higher-order peaks
 
-            D230831B_5_data.Rxx_x = np.gradient(D230831B_5_data.Rxx_x,D230831B_5_data.An_Field) # First Deriv
+            D230831B_5_data.Rxx_x = np.gradient(D230831B_5_data.Rxx_x,D230831B_5_data.An_field) # First Deriv
             # D230831B_5_data.Rxx_x = np.gradient(D230831B_5_data.Rxx_x) # Second Deriv
             
             window_size = 4000
@@ -792,15 +821,15 @@ if __name__ == "__main__":
             fft_start = 0#3520
             fft_cutoff = -1#-3520
             if i == 0:
-                R_data = np.empty((len(Vg_vals),len(D230831B_5_data.An_Field)))
+                R_data = np.empty((len(Vg_vals),len(D230831B_5_data.An_field)))
                 spect_data = np.empty((len(Vg_vals),len(D230831B_5_f_array)))
-                B_data = np.empty(len(D230831B_5_data.An_Field))
+                B_data = np.empty(len(D230831B_5_data.An_field))
                 R_data[i,:] = D230831B_5_data.Rxx_x#/np.max(D230831B_5_data.Rxx_x)
-                B_data = D230831B_5_data.An_Field
+                B_data = D230831B_5_data.An_field
                 f_data = D230831B_5_f_array
                 spect_data[i,:] = np.abs(D230831B_5_trans)/np.amax(np.abs(D230831B_5_trans))
             else: 
-                R_data[i,:] = np.interp(B_data[:],D230831B_5_data.An_Field,D230831B_5_data.Rxx_x)
+                R_data[i,:] = np.interp(B_data[:],D230831B_5_data.An_field,D230831B_5_data.Rxx_x)
                 spect_data[i,:] = np.interp(f_data[:],D230831B_5_f_array,np.abs(D230831B_5_trans)/np.amax(np.abs(D230831B_5_trans)))
             i+= 1
         
@@ -865,7 +894,7 @@ if __name__ == "__main__":
         for Vg in Vg_vals:
             file_name = "D230831B_5_inv_Bsweep_" + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
 
-            D230831B_5_data = get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+            D230831B_5_data = get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
             # D230831B_5_data.dropna(inplace=True)
             # print(D230831B_5_data)
 
@@ -892,15 +921,15 @@ if __name__ == "__main__":
             # plt.subplots(1,2)
             
             # plt.subplot(1,2,1)
-            # # plt.plot(D230831B_5_data.An_Field,np.abs(D230831B_5_data.Rxx_x + 1.j *D230831B_5_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-            # plt.plot(D230831B_5_data.An_Field,D230831B_5_data.Rxx_x ,color="b",label=r"Rxx_x")
+            # # plt.plot(D230831B_5_data.An_field,np.abs(D230831B_5_data.Rxx_x + 1.j *D230831B_5_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+            # plt.plot(D230831B_5_data.An_field,D230831B_5_data.Rxx_x ,color="b",label=r"Rxx_x")
             # R_range_start = 0
             # R_rang_stop = -500
-            # plt.scatter(D230831B_5_data.An_Field[indexOf(D230831B_5_data.Rxx_x,np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop]))],np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop]))
-            # plt.annotate(np.format_float_positional(np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop]), unique = False, precision=1)+ r" $\Omega$",[1.05*D230831B_5_data.An_Field[indexOf(D230831B_5_data.Rxx_x,np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop]))],1.1*np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop])])
-            # # plt.plot(D230831B_5_data.An_Field,D230831B_5_data.Rxy_x,color="r",label=r"Rxy_x")
-            # # plt.plot(D230831B_5_data.An_Field,D230831B_5_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-            # # plt.plot(D230831B_5_data.An_Field,D230831B_5_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+            # plt.scatter(D230831B_5_data.An_field[indexOf(D230831B_5_data.Rxx_x,np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop]))],np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop]))
+            # plt.annotate(np.format_float_positional(np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop]), unique = False, precision=1)+ r" $\Omega$",[1.05*D230831B_5_data.An_field[indexOf(D230831B_5_data.Rxx_x,np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop]))],1.1*np.amin(D230831B_5_data.Rxx_x[R_range_start:R_rang_stop])])
+            # # plt.plot(D230831B_5_data.An_field,D230831B_5_data.Rxy_x,color="r",label=r"Rxy_x")
+            # # plt.plot(D230831B_5_data.An_field,D230831B_5_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+            # # plt.plot(D230831B_5_data.An_field,D230831B_5_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
             # # plt.vlines(D230831B_5_B_pos[0],-0.1,1.2*np.amax(D230831B_5_data.Rxx_x),color="r",linestyle="dashed")
             # # plt.vlines(D230831B_5_B_pos[-1],-0.1,1.2*np.amax(D230831B_5_data.Rxx_x),color="r",linestyle="dashed")
             # plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -912,11 +941,11 @@ if __name__ == "__main__":
 
 
             # plt.subplot(1,2,2)
-            # plt.plot(D230831B_5_data.An_Field,np.abs(D230831B_5_data.Rxx_x + 1.j *D230831B_5_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-            # plt.plot(D230831B_5_data.An_Field,D230831B_5_data.Rxx_x ,color="b",label=r"Rxx_x")
-            plt.plot(D230831B_5_data.An_Field,D230831B_5_data.Rxy_x,label=r"$V_\mathrm{g}$=" + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
-            # plt.plot(D230831B_5_data.An_Field,D230831B_5_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-            # plt.plot(D230831B_5_data.An_Field,D230831B_5_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+            # plt.plot(D230831B_5_data.An_field,np.abs(D230831B_5_data.Rxx_x + 1.j *D230831B_5_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+            # plt.plot(D230831B_5_data.An_field,D230831B_5_data.Rxx_x ,color="b",label=r"Rxx_x")
+            plt.plot(D230831B_5_data.An_field,D230831B_5_data.Rxy_x,label=r"$V_\mathrm{g}$=" + np.format_float_positional(Vg,precision=4,trim='-') + ' mV')
+            # plt.plot(D230831B_5_data.An_field,D230831B_5_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+            # plt.plot(D230831B_5_data.An_field,D230831B_5_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
             # plt.vlines(D230831B_5_B_pos[0],-0.1,1.2*np.amax(D230831B_5_data.Rxx_x),color="r",linestyle="dashed")
             # plt.vlines(D230831B_5_B_pos[-1],-0.1,1.2*np.amax(D230831B_5_data.Rxx_x),color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xy}$ ($\mathrm{\Omega{}}$)")
@@ -1002,7 +1031,7 @@ if __name__ == "__main__":
 
         file_path = "Z:\\User\\Thomas\\D230831B_ref"
         file_name = "D230831B_ref_SdH1586_ill1K.dat"
-        D230831B_ref_data = get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+        D230831B_ref_data = get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
         # D230831B_ref_data.dropna(inplace=True)
         # print(D230831B_ref_data)
 
@@ -1129,11 +1158,11 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        # plt.plot(D230831B_ref_data.An_Field,np.abs(D230831B_ref_data.Rxx_x + 1.j *D230831B_ref_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        plt.plot(D230831B_ref_data.An_Field,D230831B_ref_data.Rxx_x ,color="b",label=r"Rxx_x")
-        # plt.plot(D230831B_ref_data.An_Field,D230831B_ref_data.Rxy_x,color="r",label=r"Rxy_x")
-        # plt.plot(D230831B_ref_data.An_Field,D230831B_ref_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-        # plt.plot(D230831B_ref_data.An_Field,D230831B_ref_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+        # plt.plot(D230831B_ref_data.An_field,np.abs(D230831B_ref_data.Rxx_x + 1.j *D230831B_ref_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        plt.plot(D230831B_ref_data.An_field,D230831B_ref_data.Rxx_x ,color="b",label=r"Rxx_x")
+        # plt.plot(D230831B_ref_data.An_field,D230831B_ref_data.Rxy_x,color="r",label=r"Rxy_x")
+        # plt.plot(D230831B_ref_data.An_field,D230831B_ref_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+        # plt.plot(D230831B_ref_data.An_field,D230831B_ref_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
         plt.vlines(D230831B_ref_B_pos[0],-0.1,1.2*np.amax(D230831B_ref_data.Rxx_x),color="r",linestyle="dashed")
         plt.vlines(D230831B_ref_B_pos[-1],-0.1,1.2*np.amax(D230831B_ref_data.Rxx_x),color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -1252,11 +1281,11 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        # plt.plot(F150709B_data.An_Field,np.abs(F150709B_data.Rxx_x + 1.j *F150709B_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        plt.plot(F150709B_data.An_Field,F150709B_data.Rxx_x ,color="b",label=r"Rxx_x")
-        # plt.plot(F150709B_data.An_Field,F150709B_data.Rxy_x,color="r",label=r"Rxy_x")
-        # plt.plot(F150709B_data.An_Field,F150709B_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-        # plt.plot(F150709B_data.An_Field,F150709B_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+        # plt.plot(F150709B_data.An_field,np.abs(F150709B_data.Rxx_x + 1.j *F150709B_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        plt.plot(F150709B_data.An_field,F150709B_data.Rxx_x ,color="b",label=r"Rxx_x")
+        # plt.plot(F150709B_data.An_field,F150709B_data.Rxy_x,color="r",label=r"Rxy_x")
+        # plt.plot(F150709B_data.An_field,F150709B_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+        # plt.plot(F150709B_data.An_field,F150709B_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
         # plt.vlines(F150709B_B_pos[0],0,1.2*np.amax(F150709B_data.Rxx_x),color="r",linestyle="dashed")
         # plt.vlines(F150709B_B_pos[-1],0,1.2*np.amax(F150709B_data.Rxx_x),color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -1351,11 +1380,11 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        # plt.plot(D181022A_data.An_Field,np.abs(D181022A_data.Rxx_x + 1.j *D181022A_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        plt.plot(D181022A_data.An_Field,D181022A_data.Rxx_x ,color="b",label=r"Rxx_x")
-        # plt.plot(D181022A_data.An_Field,D181022A_data.Rxy_x,color="r",label=r"Rxy_x")
-        # plt.plot(D181022A_data.An_Field,D181022A_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-        # plt.plot(D181022A_data.An_Field,D181022A_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+        # plt.plot(D181022A_data.An_field,np.abs(D181022A_data.Rxx_x + 1.j *D181022A_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        plt.plot(D181022A_data.An_field,D181022A_data.Rxx_x ,color="b",label=r"Rxx_x")
+        # plt.plot(D181022A_data.An_field,D181022A_data.Rxy_x,color="r",label=r"Rxy_x")
+        # plt.plot(D181022A_data.An_field,D181022A_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+        # plt.plot(D181022A_data.An_field,D181022A_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
         plt.vlines(D181022A_B_pos[0],0,1.2*np.amax(D181022A_data.Rxx_x),color="r",linestyle="dashed")
         plt.vlines(D181022A_B_pos[-1],0,1.2*np.amax(D181022A_data.Rxx_x),color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -1449,11 +1478,11 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        # plt.plot(D230831B_ref_data.An_Field,np.abs(D230831B_ref_data.Rxx_x + 1.j *D230831B_ref_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        plt.plot(D230831B_ref_data.An_Field,D230831B_ref_data.Rxx_x ,color="b",label=r"Rxx_x")
-        # plt.plot(D230831B_ref_data.An_Field,D230831B_ref_data.Rxy_x,color="r",label=r"Rxy_x")
-        # plt.plot(D230831B_ref_data.An_Field,D230831B_ref_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-        # plt.plot(D230831B_ref_data.An_Field,D230831B_ref_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+        # plt.plot(D230831B_ref_data.An_field,np.abs(D230831B_ref_data.Rxx_x + 1.j *D230831B_ref_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        plt.plot(D230831B_ref_data.An_field,D230831B_ref_data.Rxx_x ,color="b",label=r"Rxx_x")
+        # plt.plot(D230831B_ref_data.An_field,D230831B_ref_data.Rxy_x,color="r",label=r"Rxy_x")
+        # plt.plot(D230831B_ref_data.An_field,D230831B_ref_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+        # plt.plot(D230831B_ref_data.An_field,D230831B_ref_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
         plt.vlines(D230831B_ref_B_pos[0],-0.1,1.2*np.amax(D230831B_ref_data.Rxx_x),color="r",linestyle="dashed")
         plt.vlines(D230831B_ref_B_pos[-1],-0.1,1.2*np.amax(D230831B_ref_data.Rxx_x),color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -1542,11 +1571,11 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        # plt.plot(D230831A_b_data.An_Field,np.abs(D230831A_b_data.Rxx_x + 1.j *D230831A_b_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        plt.plot(D230831A_b_data.An_Field,D230831A_b_data.Rxx_x ,color="b",label=r"Rxx_x")
-        # plt.plot(D230831A_b_data.An_Field,D230831A_b_data.Rxy_x,color="r",label=r"Rxy_x")
-        # plt.plot(D230831A_b_data.An_Field,D230831A_b_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-        # plt.plot(D230831A_b_data.An_Field,D230831A_b_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+        # plt.plot(D230831A_b_data.An_field,np.abs(D230831A_b_data.Rxx_x + 1.j *D230831A_b_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        plt.plot(D230831A_b_data.An_field,D230831A_b_data.Rxx_x ,color="b",label=r"Rxx_x")
+        # plt.plot(D230831A_b_data.An_field,D230831A_b_data.Rxy_x,color="r",label=r"Rxy_x")
+        # plt.plot(D230831A_b_data.An_field,D230831A_b_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+        # plt.plot(D230831A_b_data.An_field,D230831A_b_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
         # plt.vlines(D230831A_b_B_pos[0],-0.1,1.2*np.amax(D230831A_b_data.Rxx_x),color="r",linestyle="dashed")
         # plt.vlines(D230831A_b_B_pos[-1],-0.1,1.2*np.amax(D230831A_b_data.Rxx_x),color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -1633,11 +1662,11 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        # plt.plot(D230831B_b_data.An_Field,np.abs(D230831B_b_data.Rxx_x + 1.j *D230831B_b_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        plt.plot(D230831B_b_data.An_Field,D230831B_b_data.Rxx_x ,color="b",label=r"Rxx_x")
-        # plt.plot(D230831B_b_data.An_Field,D230831B_b_data.Rxy_x,color="r",label=r"Rxy_x")
-        # plt.plot(D230831B_b_data.An_Field,D230831B_b_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-        # plt.plot(D230831B_b_data.An_Field,D230831B_b_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+        # plt.plot(D230831B_b_data.An_field,np.abs(D230831B_b_data.Rxx_x + 1.j *D230831B_b_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        plt.plot(D230831B_b_data.An_field,D230831B_b_data.Rxx_x ,color="b",label=r"Rxx_x")
+        # plt.plot(D230831B_b_data.An_field,D230831B_b_data.Rxy_x,color="r",label=r"Rxy_x")
+        # plt.plot(D230831B_b_data.An_field,D230831B_b_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+        # plt.plot(D230831B_b_data.An_field,D230831B_b_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
         plt.vlines(D230831B_b_B_pos[0],-0.1,1.2*np.amax(D230831B_b_data.Rxx_x),color="r",linestyle="dashed")
         plt.vlines(D230831B_b_B_pos[-1],-0.1,1.2*np.amax(D230831B_b_data.Rxx_x),color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -1724,11 +1753,11 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        # plt.plot(D230831A_b_data.An_Field,np.abs(D230831A_b_data.Rxx_x + 1.j *D230831A_b_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        plt.plot(D230831A_b_data.An_Field,D230831A_b_data.Rxx_x ,color="b",label=r"Rxx_x")
-        # plt.plot(D230831A_b_data.An_Field,D230831A_b_data.Rxy_x,color="r",label=r"Rxy_x")
-        # plt.plot(D230831A_b_data.An_Field,D230831A_b_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-        # plt.plot(D230831A_b_data.An_Field,D230831A_b_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+        # plt.plot(D230831A_b_data.An_field,np.abs(D230831A_b_data.Rxx_x + 1.j *D230831A_b_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        plt.plot(D230831A_b_data.An_field,D230831A_b_data.Rxx_x ,color="b",label=r"Rxx_x")
+        # plt.plot(D230831A_b_data.An_field,D230831A_b_data.Rxy_x,color="r",label=r"Rxy_x")
+        # plt.plot(D230831A_b_data.An_field,D230831A_b_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+        # plt.plot(D230831A_b_data.An_field,D230831A_b_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
         # plt.vlines(D230831A_b_B_pos[0],-0.1,1.2*np.amax(D230831A_b_data.Rxx_x),color="r",linestyle="dashed")
         # plt.vlines(D230831A_b_B_pos[-1],-0.1,1.2*np.amax(D230831A_b_data.Rxx_x),color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -1813,11 +1842,11 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        # plt.plot(D230831A_a_data.An_Field,np.abs(D230831A_a_data.Rxx_x + 1.j *D230831A_a_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        plt.plot(D230831A_a_data.An_Field,D230831A_a_data.Rxx_x ,color="b",label=r"Rxx_x")
-        # plt.plot(D230831A_a_data.An_Field,D230831A_a_data.Rxy_x,color="r",label=r"Rxy_x")
-        # plt.plot(D230831A_a_data.An_Field,D230831A_a_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
-        # plt.plot(D230831A_a_data.An_Field,D230831A_a_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
+        # plt.plot(D230831A_a_data.An_field,np.abs(D230831A_a_data.Rxx_x + 1.j *D230831A_a_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        plt.plot(D230831A_a_data.An_field,D230831A_a_data.Rxx_x ,color="b",label=r"Rxx_x")
+        # plt.plot(D230831A_a_data.An_field,D230831A_a_data.Rxy_x,color="r",label=r"Rxy_x")
+        # plt.plot(D230831A_a_data.An_field,D230831A_a_data.Rxx_y,color="b",linestyle="dashed",label=r"Rxx_y")
+        # plt.plot(D230831A_a_data.An_field,D230831A_a_data.Rxy_y,color="r",linestyle="dashed",label=r"Rxy_y")
         plt.vlines(D230831A_a_B_pos[0],-0.1,1.2*np.amax(D230831A_a_data.Rxx_x),color="r",linestyle="dashed")
         plt.vlines(D230831A_a_B_pos[-1],-0.1,1.2*np.amax(D230831A_a_data.Rxx_x),color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -1909,11 +1938,11 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        # plt.plot(Loki_data.An_Field,np.abs(Loki_data.Rxx_x + 1.j *Loki_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        plt.plot(Loki_data.An_Field,Loki_data.Rxx_x ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        # plt.plot(Loki_data.An_Field,Loki_data.Ryy_x,color="b",label=r"Re{$R_\mathrm{yy}$}, single lock-in")
-        # plt.plot(Loki_data.An_Field,Loki_data.Rxx_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{xx}$}, single lock-in")
-        # plt.plot(Loki_data.An_Field,Loki_data.Ryy_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{yy}$}, single lock-in")
+        # plt.plot(Loki_data.An_field,np.abs(Loki_data.Rxx_x + 1.j *Loki_data.Rxx_y) ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        plt.plot(Loki_data.An_field,Loki_data.Rxx_x ,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        # plt.plot(Loki_data.An_field,Loki_data.Ryy_x,color="b",label=r"Re{$R_\mathrm{yy}$}, single lock-in")
+        # plt.plot(Loki_data.An_field,Loki_data.Rxx_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{xx}$}, single lock-in")
+        # plt.plot(Loki_data.An_field,Loki_data.Ryy_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{yy}$}, single lock-in")
         plt.vlines(Loki_B_pos[0],-0.1,1.5e-4,color="r",linestyle="dashed")
         plt.vlines(Loki_B_pos[-1],-0.1,1.5e-4,color="r",linestyle="dashed")
         plt.ylabel(r"$R_{\rm xx}$ ($\mathrm{\Omega{}}$)")
@@ -1994,10 +2023,10 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        plt.plot(ETH_data.An_Field,ETH_data.Rxx_x,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        # plt.plot(ETH_data.An_Field,ETH_data.Ryy_x,color="b",label=r"Re{$R_\mathrm{yy}$}, single lock-in")
-        # plt.plot(ETH_data.An_Field,ETH_data.Rxx_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{xx}$}, single lock-in")
-        # plt.plot(ETH_data.An_Field,ETH_data.Ryy_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{yy}$}, single lock-in")
+        plt.plot(ETH_data.An_field,ETH_data.Rxx_x,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        # plt.plot(ETH_data.An_field,ETH_data.Ryy_x,color="b",label=r"Re{$R_\mathrm{yy}$}, single lock-in")
+        # plt.plot(ETH_data.An_field,ETH_data.Rxx_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{xx}$}, single lock-in")
+        # plt.plot(ETH_data.An_field,ETH_data.Ryy_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{yy}$}, single lock-in")
         plt.ylabel(r"$R_{\rm Hall}$ (k$\mathrm{\Omega{}}$)")
         plt.xlabel(r"$B$ (T)")
         plt.title(r"Long. Resistance, $T$ = 1.8 K, 8/2/23 ")
@@ -2076,10 +2105,10 @@ if __name__ == "__main__":
 
         # # Plot raw data
         # plt.figure()
-        # # plt.plot(p01_m8_data.An_Field,p01_m8_data.Rxx_x,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        # plt.plot(p01_m8_data.An_Field,p01_m8_data.Ryy_x,color="b",label=r"Re{$R_\mathrm{yy}$}, single lock-in")
-        # # plt.plot(p01_m8_data.An_Field,p01_m8_data.Rxx_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{xx}$}, single lock-in")
-        # # plt.plot(p01_m8_data.An_Field,p01_m8_data.Ryy_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{yy}$}, single lock-in")
+        # # plt.plot(p01_m8_data.An_field,p01_m8_data.Rxx_x,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        # plt.plot(p01_m8_data.An_field,p01_m8_data.Ryy_x,color="b",label=r"Re{$R_\mathrm{yy}$}, single lock-in")
+        # # plt.plot(p01_m8_data.An_field,p01_m8_data.Rxx_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{xx}$}, single lock-in")
+        # # plt.plot(p01_m8_data.An_field,p01_m8_data.Ryy_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{yy}$}, single lock-in")
         # plt.ylabel(r"$R_{\rm Hall}$ (k$\mathrm{\Omega{}}$)")
         # plt.xlabel(r"$B$ (T)")
         # plt.title(r"Long. Resistance, $T$ = 1.8 K, 8/2/23 ")
@@ -2148,10 +2177,10 @@ if __name__ == "__main__":
 
         # Plot raw data
         plt.figure()
-        plt.plot(m9_p9_data.An_Field,m9_p9_data.Rxx_x,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
-        # plt.plot(m9_p9_data.An_Field,m9_p9_data.Ryy_x,color="b",label=r"Re{$R_\mathrm{yy}$}, single lock-in")
-        # plt.plot(m9_p9_data.An_Field,m9_p9_data.Rxx_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{xx}$}, single lock-in")
-        # plt.plot(m9_p9_data.An_Field,m9_p9_data.Ryy_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{yy}$}, single lock-in")
+        plt.plot(m9_p9_data.An_field,m9_p9_data.Rxx_x,color="b",label=r"Re{$R_\mathrm{xx}$}, single lock-in")
+        # plt.plot(m9_p9_data.An_field,m9_p9_data.Ryy_x,color="b",label=r"Re{$R_\mathrm{yy}$}, single lock-in")
+        # plt.plot(m9_p9_data.An_field,m9_p9_data.Rxx_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{xx}$}, single lock-in")
+        # plt.plot(m9_p9_data.An_field,m9_p9_data.Ryy_y,color="b",linestyle="dashed",label=r"Im{$R_\mathrm{yy}$}, single lock-in")
         plt.ylabel(r"$R_{\rm Hall}$ (k$\mathrm{\Omega{}}$)")
         plt.xlabel(r"$B$ (T)")
         plt.title(r"Long. Resistance, $T$ = 1.8 K, 8/2/23 ")

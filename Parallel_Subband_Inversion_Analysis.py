@@ -121,7 +121,7 @@ Keeping track of data
 
 '''
 ###########################
-USE THESE PARAMETERS:
+USE THESE PARAMETERS for ETH data:
   I = 2e-6
   Iscalar = 0.97
   Rotate = [10, 11.5, 12.1]   ([Lockin_1 phase, Lockin_2 phase, Lockin_3 phase])
@@ -132,8 +132,8 @@ USE THESE PARAMETERS:
 
 
 
-def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
-                     I = 2e-6, Iscaler = 0.97, Rotate = [10,11.5,12.1], ne = 4E15, B_start = 0, B_end = -1):
+def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, sigma = False, Vg = 000, NU = False,
+                     I = 2e-6, Iscalar = 0.97, Rotate = [10,11.5,12.1], ne = 4E15, B_start = 0, B_end = -1):
 
 
 
@@ -146,14 +146,15 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         Rxx_1or2: (int, 1 or 2), chooses whether to use Rxx or Rxx_2 data when performing FFT analysis
         Vg: Gate voltage (mV) (selects file of this gate voltage)
         I: Current (Amps)
-        Iscaler: Constant to multiply current 
+        Iscalar: Constant to multiply current 
         Rotate: (List of DEGREES with length 3), each element is a complex phase change [Lockin_1 Phase, Lockin_2 Phase, Lockin_3 Phase]
         ne: Carrier concentration in well, assumed roughly constant across B field, used for Rho parallel calculations
         B_start, B_end: (float), start and ending values (in Tesla) of B field to observe and analyse
     '''
     
     
-    smoothing = 0       ###Option to smooth jaggady low B data before performing FFT
+    
+    smoothing = 0        ###Option to smooth jaggady low B data before performing FFT
     apodization = 3      ###CAN BE 0, 1, 2, or 3: Defines order of NB apodization to apply to Rxx vs 1/B data. Apodization = 0 means NO apodization
     pad_zeros = 0        ###Do you want to pad post-processed Rxx and B data with zeros to a user defined start point?
     
@@ -165,8 +166,9 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     
     RemoveFFTSpikes = 0  ###User defines regions of FFT to remove, then FFT is inverted back to Rxx vs. 1/B data
     if RemoveFFTSpikes == 1:
-        replace = "Linear"      #Set to "Linear" OR "Zeros". When user defined spikes in the FFT are removed, 
+        replace = "Zeros"      #Set to "Linear" OR "Zeros". When user defined spikes in the FFT are removed, 
                                         #do you want the spikes to be replaced with "Zeros" or a "Linear" fit between endpoints?
+    
     
     
     PlotRAWXX = 1
@@ -185,57 +187,81 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     
     
                    
+    plt.close('all')
     
+    if NU == False:
     
-    file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
-    #file_path = "C:\\Users\\thoma\\OneDrive\\Documents\\Research Materials\\ETH Zurich Materials\\Code with Chris\\Parallel_Subband_Analysis\\D230831B 2nd cooldown\\Full Sweeps"
-    #file_path = "D230831B 2nd cooldown/Full Sweeps"
-
-    
-    if lockin2XX == False:
-        file_name = "D230831B_2_"
-        file_name = file_name + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
-        geo_fact = (0.5/2.65)  #Scalar to convert R to Resistivity
-    
-    if lockin2XX == True:
-        file_name = "D230831B_4_"            #Used for almost all full sweeps
-        
-        #file_name =  "D230831B_3_Contacts_"     #For Contact comparison _3 sweep
-        #file_name = "D230831B_4_LowField_"      #For initial 0meV low B field run
-        #file_name = "D230831B_4_Last_"          #For final 0meV low B field run
-        #file_name = "D230831B_4_Negative_"      #For -200mV gate run
-        
-        geo_fact = (0.5/1.325)  #Scalar to convert R to Resistivity
+        file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\GaAs Degen Calc\Gate tests\Parallel_Subband_Analysis\D230831B 2nd cooldown\Full Sweeps"
+        #file_path = "C:\\Users\\thoma\\OneDrive\\Documents\\Research Materials\\ETH Zurich Materials\\Code with Chris\\Parallel_Subband_Analysis\\D230831B 2nd cooldown\\Full Sweeps"
+        #file_path = "D230831B 2nd cooldown/Full Sweeps"
         
         
-        #Automatically determine correct filename
-        if type(Vg) == int:
+        if lockin2XX == False:
+            file_name = "D230831B_2_"
             file_name = file_name + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
-        if type(Vg) == str:    
-            if Vg in ["D230831B_3_Contacts_", "D230831B_4_LowField_", "D230831B_4_Last_"]:
-                file_name = Vg
-                file_name = file_name + np.format_float_positional(000,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
-                Vg = 000
-            elif Vg == "D230831B_4_Negative_":
-                file_name = Vg
-                file_name = file_name + np.format_float_positional(200,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
-                Vg = -200
-            else:
-                raise NameError('No usuable Vg_val detected')
+            geo_fact = (0.5/2.65)  #Scalar to convert R to Resistivity
+        
+        if lockin2XX == True:
+            file_name = "D230831B_4_"            #Used for almost all full sweeps
             
+            #file_name =  "D230831B_3_Contacts_"     #For Contact comparison _3 sweep
+            #file_name = "D230831B_4_LowField_"      #For initial 0meV low B field run
+            #file_name = "D230831B_4_Last_"          #For final 0meV low B field run
+            #file_name = "D230831B_4_Negative_"      #For -200mV gate run
+            
+            geo_fact = (0.5/1.325)  #Scalar to convert R to Resistivity
+            
+            
+            #Automatically determine correct filename
+            if type(Vg) == int:
+                file_name = file_name + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
+            if type(Vg) == str:    
+                if Vg in ["D230831B_3_Contacts_", "D230831B_4_LowField_", "D230831B_4_Last_"]:
+                    file_name = Vg
+                    file_name = file_name + np.format_float_positional(000,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
+                    Vg = 000
+                elif Vg == "D230831B_4_Negative_":
+                    file_name = Vg
+                    file_name = file_name + np.format_float_positional(200,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
+                    Vg = -200
+                else:
+                    raise NameError('No usuable Vg_val detected')
+                
+        
+    if NU == True:  
+        
+        NU_files = {0: "240501_062_GaAs_D230831B_5_I100nA_G00_T2_B1_Vxx_Vxy", 
+                    100 : "240501_063_GaAs_D230831B_5_I100nA_G01_T2_B0_Vxx_Vxy",
+                    200: "240501_064_GaAs_D230831B_5_I100nA_G02_T2_B1_Vxx_Vxy",
+                    250: "240501_065_GaAs_D230831B_5_I100nA_G025_T2_B0_Vxx_Vxy",
+                    300: "240501_066_GaAs_D230831B_5_I100nA_G03_T2_B1_Vxx_Vxy",
+                    350: "240501_067_GaAs_D230831B_5_I100nA_G035_T2_B0_Vxx_Vxy",
+                    400: "240501_068_GaAs_D230831B_5_I100nA_G04_T2_B1_Vxx_Vxy",
+                    450: "240501_069_GaAs_D230831B_5_I100nA_G045_T2_B0_Vxx_Vxy",
+                    500: "240501_070_GaAs_D230831B_5_I100nA_G05_T2_B1_Vxx_Vxy",
+                    550: "240501_071_GaAs_D230831B_5_I100nA_G055_T2_B0_Vxx_Vxy",
+                    600: "240501_072_GaAs_D230831B_5_I100nA_G06_T2_B1_Vxx_Vxy",
+                    650: "240501_077_GaAs_D230831B_5_I100nA_G065_T2_B0_Vxx_Vxy",
+                    700: "240501_078_GaAs_D230831B_5_I100nA_G07_T2_B1_Vxx_Vxy"}
+
+        geo_fact = (0.5/1.325)  #Scalar to convert R to Resistivity
+
+        file_path = r"C:\Users\Madma\Documents\Northwestern\Research (Grayson)\FMSA\Fridge Runs"
+        file_name = NU_files[Vg] +'.csv'
+        
         
         
     #Grab dataframe using filename
-    D230831B_5_data = QFT.get_dat_data(file_path, file_name, ["ETH"], lockin2XX, 
+    D230831B_5_data = QFT.get_dat_data(file_path, file_name, ["ETH"], lockin2XX, NU,
                                        has_header=True, data_headings=["variable x","lockin1 x", "lockin1 y", "lockin2 x", "lockin2 y", "lockin3 x", "lockin3 y"],
-                                       VoverI = (1/(I*Iscaler)))
+                                       VoverI = (1/(I*Iscalar)))
     
     ### Here we filter by B field for values greater than B_start and less than B_end
     if B_end != -1:
-        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_Field > B_start]
-        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_Field < B_end]
+        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_field > B_start]
+        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_field < B_end]
     else:
-        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_Field > B_start]
+        D230831B_5_data = D230831B_5_data[D230831B_5_data.An_field > B_start]
 
 
     #Ignore first and last 50 data points
@@ -245,15 +271,17 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     #Rxy_y = D230831B_5_data.Rxy_y[50:-50]
     #Rxx_x2 = D230831B_5_data.Rxx_x2[50:-50]
     #Rxx_y2 = D230831B_5_data.Rxx_y2[50:-50]
-    #An_Field = D230831B_5_data.An_Field[50:-50]
+    #An_field = D230831B_5_data.An_field[50:-50]
     
+    
+    An_field = D230831B_5_data.An_field
     Rxx_x = D230831B_5_data.Rxx_x
     Rxx_y = D230831B_5_data.Rxx_y
     Rxy_x = D230831B_5_data.Rxy_x
     Rxy_y = D230831B_5_data.Rxy_y
-    Rxx_x2 = D230831B_5_data.Rxx_x2
-    Rxx_y2 = D230831B_5_data.Rxx_y2
-    An_Field = D230831B_5_data.An_Field
+    if NU == False:
+        Rxx_x2 = D230831B_5_data.Rxx_x2
+        Rxx_y2 = D230831B_5_data.Rxx_y2
     
     #Rxx_grad = np.empty(len(Rxx_x))
     #Rxx_grad = np.gradient(Rxx_x)
@@ -262,31 +290,88 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
 
 
     
-    ###ROTATE DATA BY USER DEFINED PHASE####
-    
-    if lockin2XX == True:
-        Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
-        Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[1])  #Lockin 2 measures RXX
-        Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[2])
-    else:
-        Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
-        Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[2])  #Lockin 3 measures RXX
-        Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[1])
-    
-    
+    ###ROTATE DATA BY USER DEFINED PHASE####, skip for NU data
+    if NU == False:
+        if lockin2XX == True:
+            Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
+            Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[1])  #Lockin 2 measures RXX
+            Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[2])
+        else:
+            Rxx_x, Rxx_y = QFT.ComplexRotate(Rxx_x, Rxx_y, Rotate[0])
+            Rxx_x2, Rxx_y2 = QFT.ComplexRotate(Rxx_x2, Rxx_y2, Rotate[2])  #Lockin 3 measures RXX
+            Rxy_x, Rxy_y = QFT.ComplexRotate(Rxy_x, Rxy_y, Rotate[1])
+        
+        
     
     #CREATE MAIN DATAFRAME
     inv = 0
-    inv = pd.DataFrame({'B_field': An_Field,
-                        'Rxx': Rxx_x,
-                        'Rxx_y':Rxx_y,
-                        'Rxx2': Rxx_x2,
-                        'Rxx2_y':Rxx_y2,
-                        'Rxy': Rxy_x,
-                        'Rxy_y':Rxy_y})
-    inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+    
+    if NU == False:
+        inv = pd.DataFrame({'An_field': An_field,
+                            'Rxx_x': Rxx_x,
+                            'Rxx_y':Rxx_y,
+                            'Rxx_x2': Rxx_x2,
+                            'Rxx_y2':Rxx_y2,
+                            'Rxy_x': Rxy_x,
+                            'Rxy_y':Rxy_y})
+    else:
+        inv = pd.DataFrame({'An_field': An_field,
+                            'Rxx_x': Rxx_x,
+                            'Rxx_y':Rxx_y,
+                            'Rxy_x': Rxy_x,
+                            'Rxy_y':Rxy_y})
+    inv.sort_values(by='An_field',inplace=True,ignore_index=True)
     
     
+    
+    
+    ### Convert Resistance to Resistivity
+    if Rxx_1or2 == 1:
+        rho_xx_tot = inv.Rxx_x * geo_fact  #Rxx1 converted to rho
+    if Rxx_1or2 == 2:
+        rho_xx_tot = inv.Rxx_x2 * geo_fact  #Rxx2 converted to rho
+    rho_xy_tot = inv.Rxy_x           #rho_xy  is equal to Rxy
+    rho_det_tot = rho_xy_tot**2 + rho_xx_tot**2
+    
+    
+    
+    
+    #Linear fit of rhoxy to create "FAKE" rho xy data
+    reach = 50
+    m_xy, b_xy = np.polyfit(inv.An_field[:reach], rho_xy_tot[:reach], 1)
+    
+    fake_rho_xy_tot = inv.An_field * m_xy   #straight line passing through zero
+    fake_rho_xy_plot = np.linspace(0, B_end, 100)*m_xy
+    
+    sigma_xx_tot = rho_xx_tot/((fake_rho_xy_tot**2) + (rho_xx_tot**2))  #Conductivity
+    
+    if sigma == 1:
+        fig, ax1 = plt.subplots()
+        ax1.set_title(r'Resistivity and Conductivity, G.V. = {}mV'.format(Vg))
+        ax1.scatter(inv.An_field[reach], rho_xy_tot[reach])
+        
+        
+        
+        ax2 = ax1.twinx()
+        
+        
+        #ax1.plot(inv.An_field, fake_rho_xy_tot, 'r--', label = r'FAKE $\rho_{xy}$')
+        ax1.plot(np.linspace(0, B_end, 100), fake_rho_xy_plot, 'r--', label = r'FAKE $\rho_{xy}$')
+        ax1.plot(inv.An_field, rho_xy_tot, c = 'g', label = r'$\rho_{xy}$')
+        ax1.plot(inv.An_field, rho_xx_tot, c='y', label = r'$\rho_{xx}$')
+        ax2.plot(inv.An_field, sigma_xx_tot, c = 'b', label= r'$\sigma_{xx}$')
+        ax1.set_xlabel("B Field ($T$)")
+        ax1.set_ylabel("Resistivity   $(\Omega m)$")
+        ax2.set_ylabel("Conductivity   $(\Omega m)^{-1}$")
+        fig.legend(loc = [0.3, 0.6])
+        
+    inv["rho_xx"] = rho_xx_tot
+    inv["rho_xy"] = rho_xy_tot
+    inv["sigma_xx"] = sigma_xx_tot
+   
+   
+    
+   
     
     ###################################################
     ###################################################
@@ -295,17 +380,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     ###################################################
     
     
-    
-    
-    ### Convert Resistance to Resistivity
-    rho_xx_tot = inv.Rxx*geo_fact  #R_xx multiplied by geometric factor
-    rho_xy_tot = inv.Rxy           #rho_xy  is equal to Rxy
-    rho_det_tot = rho_xy_tot**2 + rho_xx_tot**2
-    
-    
-    
-    
-    #### ne*c.e/An_Field     OR      nu*c.e**2/c.h
+    #### ne*c.e/An_field     OR      nu*c.e**2/c.h
 
     
     nu = 1
@@ -363,7 +438,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     inv['rho_xx_par_nu8'] = rho_xx_par_nu8
     inv['rho_xy_par_nu8'] = rho_xy_par_nu8
     
-    inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+    inv.sort_values(by='An_field',inplace=True,ignore_index=True)
    
 
 
@@ -407,37 +482,53 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     nu_bounds.append((380,408)) # nu = 8
 
 
+
+
+    ###########################
     #######  PLOTTING  ########
-
-    plt.close('all')  #Start fresh
-
+    ###########################
     
+    
+    
+    
+    #Determine appropriate label to use in plotting:
+    if gradient == 1:
+        y_lab = r'Deriv. of Rxx ($\Omega/T$)'
+    elif sigma == 1:
+        y_lab = r'$\sigma_{xx} (\Omega*m)^{-1}$'
+    else:
+        y_lab = r'Rxx ($\Omega$)'
+
+
 
     if PlotRAWXX == True:
         # plt.plot(inv.Rxx[nu_bounds[3][0]:nu_bounds[3][1]])
         plt.figure("RAWXX")
         plt.title("RAWXX, Vg = " + str(Vg) + "mV")
         if Rxx_1or2 == 1:
-            plt.plot(inv.B_field,inv.Rxx, c = 'b', label = "Rxx")
-            plt.plot(inv.B_field, inv.Rxx_y, c = 'b', linestyle = "--", label = "Rxx_y")
+            plt.plot(inv.An_field,inv.Rxx_x, c = 'b', label = "Rxx")
+            plt.plot(inv.An_field, inv.Rxx_y, c = 'b', linestyle = "--", label = "Rxx_y")
         if Rxx_1or2 == 2:
-            plt.plot(inv.B_field, inv.Rxx2, c = 'b',label = "Rxx_2")
-            plt.plot(inv.B_field, inv.Rxx2_y, c = 'b', linestyle = "--", label = "Rxx_2y")
-        #plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
-        #plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
-        #plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
-        #plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-        #plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-        #plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-        #plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-        #plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+            plt.plot(inv.An_field, inv.Rxx_x2, c = 'b',label = "Rxx_2")
+            plt.plot(inv.An_field, inv.Rxx_y2, c = 'b', linestyle = "--", label = "Rxx_y2")
+        #plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
+        #plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
+        #plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
+        #plt.scatter([inv.An_field[nu_bounds[4][0]],inv.An_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
+        #plt.scatter([inv.An_field[nu_bounds[5][0]],inv.An_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+        #plt.scatter([inv.An_field[nu_bounds[6][0]],inv.An_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+        #plt.scatter([inv.An_field[nu_bounds[7][0]],inv.An_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+        #plt.scatter([inv.An_field[nu_bounds[8][0]],inv.An_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
         plt.ylabel("$R_{xx} (\Omega)$")
         plt.xlabel("B (T)")
         plt.grid()
         plt.legend()
 
         plt.figure("RAWXX_InvB")
-        plt.plot(1/(inv.B_field),inv.Rxx, c = 'b', label = "Rxx")
+        if Rxx_1or2 == 1:
+            plt.plot(1/(inv.An_field),inv.Rxx_x, c = 'b', label = "Rxx")
+        if Rxx_1or2 == 2:
+            plt.plot(1/(inv.An_field),inv.Rxx_x2, c = 'b', label = "Rxx2")
         plt.title("RAWXX VS 1/B, Vg = " + str(Vg) + "mV")
         plt.ylabel("$R_{xx} (\Omega)$")
         plt.xlabel("1/B $(T^{-1})$")
@@ -462,20 +553,21 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     if PlotRAWXY == True:
         plt.figure("RAWXY")
         plt.title("RAWXY, Vg = " + str(Vg) + "mV")
-        plt.plot(inv.B_field,inv.Rxy)
-        plt.plot(inv.B_field,inv.Rxy_y)
-        #plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxy[nu_bounds[1][0]],inv.Rxy[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
-        #plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxy[nu_bounds[2][0]],inv.Rxy[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
-        #plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxy[nu_bounds[3][0]],inv.Rxy[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
-        #plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxy[nu_bounds[4][0]],inv.Rxy[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-        #plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-        #plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-        #plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-        #plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+        plt.plot(inv.An_field,inv.Rxy_x)
+        plt.plot(inv.An_field,inv.Rxy_y)
+        #plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxy[nu_bounds[1][0]],inv.Rxy[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
+        #plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxy[nu_bounds[2][0]],inv.Rxy[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
+        #plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxy[nu_bounds[3][0]],inv.Rxy[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
+        #plt.scatter([inv.An_field[nu_bounds[4][0]],inv.An_field[nu_bounds[4][1]]],[inv.Rxy[nu_bounds[4][0]],inv.Rxy[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
+        #plt.scatter([inv.An_field[nu_bounds[5][0]],inv.An_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+        #plt.scatter([inv.An_field[nu_bounds[6][0]],inv.An_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+        #plt.scatter([inv.An_field[nu_bounds[7][0]],inv.An_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+        #plt.scatter([inv.An_field[nu_bounds[8][0]],inv.An_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
         plt.ylabel("$R_{xy} (\Omega)$")
         plt.xlabel("B (T)")
         plt.grid()
         plt.legend()
+        
         
         if SaveRAWXY == True:
             if lockin2XX == False:
@@ -494,29 +586,29 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     if PlotINVXX == True:
         plt.figure("INVXX")
         nu=1
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',label=str(nu))
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',label=str(nu))
         #nu=2
-        #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
-        #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r', label=str(nu))
+        #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
+        #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r', label=str(nu))
         # nu=3
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
         # nu=4
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
         # nu=5
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
         # nu=6
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
         # nu=7
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
         # nu=8
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
         plt.title(r"Parallel Resistivity XX, $\nu$ = 1-"+str(nu) + " Vg = " + str(Vg) + "mV")
         plt.ylabel(r"$\rho$ ($\Omega$)")
         plt.xlabel(r"$B$ (T)")
@@ -540,29 +632,29 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     if PlotINVXY == True:
         plt.figure("INVXY")
         nu=1
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',label=str(nu))
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',label=str(nu))
         #nu=2
-        #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k', label = "Raw")
-        #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',label=str(nu))
+        #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k', label = "Raw")
+        #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',label=str(nu))
         # nu=3
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
         # nu=4
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
         # nu=5
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
         # nu=6
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
         # nu=7
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
         # nu=8
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
         plt.title(r"Parallel Resistivity XY, $\nu$ = 1-"+ str(nu) + " Vg = " + str(Vg) + "mV")
         plt.ylabel(r"$\rho$ ($\Omega$)")
         plt.xlabel(r"$B$ (T)")
@@ -580,35 +672,52 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                      xycoords='axes fraction')
                 plt.savefig("plots/INVXY_4_" + str(Vg) + ".png")
 
+    
 
 
+
+    ######################################
+    #########   FFT ANALYSIS   ###########
+    ######################################
+
+
+
+    #if PlotFFTXX is FALSE, no FFT analysis is performed
+    
+    
     if PlotFFTXX == 1:
         #User defined Rxx_1or2 determines if Rxx_x or Rxx_x2 is used for FFT calculations
         if gradient == True:
             if Rxx_1or2 == 1:
-                D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x, D230831B_5_data.An_Field)
+                inv["Rxx_grad"] = np.gradient(inv.Rxx_x, inv.An_field)
             if Rxx_1or2 == 2:
-                D230831B_5_data["Rxx_grad"] = np.gradient(D230831B_5_data.Rxx_x2, D230831B_5_data.An_Field)
+                inv["Rxx_grad"] = np.gradient(inv.Rxx_x2, inv.An_field)
 
 
             window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
             
             #Take desired range of data, run preliminary data adjustments
-            D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx_grad"], order=2, background_mode = "fit", extra_point_inds=200, start_point=window[0],
+            D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(inv,["xx_grad"], order=2, background_mode = "fit", extra_point_inds=200, start_point=window[0],
                                                             chop_point = window[1], invert=False, show_plot=True)
             
 
         if gradient == False:
-            window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
-            
-            if Rxx_1or2 == 1:
-                D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx"], order=2, background_mode="fit",extra_point_inds=200, start_point=window[0],
-                                                        chop_point = window[1], invert=False, show_plot=True)
-            if Rxx_1or2 == 2:
-                D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(D230831B_5_data,["xx2"], order=2, background_mode="fit",extra_point_inds=200, start_point=window[0],
-                                                        chop_point = window[1], invert=False, show_plot=True)
-            
+            if sigma == False:
+                window = [-1,0]  #range of Rxx data points to use, set = [-1, 0] to use entire range of data
+                
+                if Rxx_1or2 == 1:
+                    D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(inv, ["xx"], order=2, background_mode="fit",extra_point_inds=200, start_point=window[0],
+                                                            chop_point = window[1], invert=False, show_plot=True)
+                if Rxx_1or2 == 2:
+                    D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(inv,["xx2"], order=2, background_mode="fit",extra_point_inds=200, start_point=window[0],
+                                                            chop_point = window[1], invert=False, show_plot=True)
+                
 
+            if sigma == True:
+                window = [-1,0]
+            
+                D230831B_5_R_pos , D230831B_5_B_pos = QFT.apodize_data(inv, ["sigma_xx"], order=2, background_mode="fit",extra_point_inds=200, start_point=window[0],
+                                                    chop_point = window[1], invert=False, show_plot=True)
         
         #### FFT processing to get rid of ugly low B data (sharp triangles instead of sinusoidal data)  #######
         
@@ -632,12 +741,12 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                 plt.plot(new_B, new_R)
                 plt.title("Added B to 0T")
                 plt.xlabel("B (T)")
-                plt.ylabel("Rxx")
+                plt.ylabel(y_lab)
             
             
             #Perform FFT, convert x_axis to carrier concentration
             
-            print("\n\nPerforming FFT of Rxx vs B for SMOOTHING")
+            print("\n\nPerforming FFT for SMOOTHING")
             D230831B_5_trans, D230831B_5_f_array = QFT.real_FFT(D230831B_5_B_pos, new_R, 12)
             #These results are basically junk, the results are a frequency components of Rxx vs B, where frequency is 1/B
             #We are just doing this FFT so we can mechanically alter the FFT results and invert them, smoothing the resulting inverted data
@@ -650,7 +759,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             
             
             
-            #Plot results, multiply by scalers to convert m to cm,  
+            #Plot results, multiply by scalars to convert m to cm,  
             if PlotSMOOTHINGFFT == True:
                 plt.figure()
                 plt.plot(D230831B_5_f_array[fft_start:fft_cutoff],1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "real")
@@ -683,7 +792,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                 plt.plot(interp_B, inverted_trans[:len(interp_B)])   #NOTE: amplitude is off by ~ factor of 10
                 plt.title("Smoothed Inverse FFT Results")
                 plt.xlabel("B (T)")
-                plt.ylabel("Rxx (Ohms)")
+                plt.ylabel(y_lab)
             
             
             #Rename data, remove added padded data
@@ -723,19 +832,14 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
 
                 #####Error checking Plots######
         plt.figure()
-        plt.plot(1/D230831B_5_B_inv , D230831B_5_R_inv)
+        plt.plot(1/D230831B_5_B_inv, D230831B_5_R_inv)
         plt.xlabel("1/B $(T^{-1})$")
-        plt.ylabel("Gradient of Rxx")
-        if gradient == True:
-            plt.ylabel("Deriv. of Rxx")
-            plt.title("Post-Processing Derivative of Rxx vs 1/B")
-        else:
-            plt.ylabel("Rxx")
-            plt.title("Post-Processing Rxx vs 1/B")
+        plt.ylabel(y_lab)
+        plt.title("Signal, Post-Processing")
 
         
 
-        print("\n\nPerforming FFT of Rxx vs 1/B")
+        print("\n\nPerforming FFT")
        
         if smoothing == True:
             power = 17
@@ -762,7 +866,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         
         
         #####  Plot Results  ####### 
-        #multiply by scalers to convert m to cm, multiply x-axis by 2e/h to convert to carrier concentration
+        #multiply by scalars to convert m to cm, multiply x-axis by 2e/h to convert to carrier concentration
         graph, ax1 = plt.subplots()
 
         
@@ -866,7 +970,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
     
             plt.title("Inverted results of rotated FFT")
             plt.xlabel("1/B $(T^{-1})$")
-            plt.ylabel("Grad. of Rxx")
+            plt.ylabel(y_lab)
             plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=1)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=1)+r"T]",
                      xy=[0.65,0.95],
                      xycoords='axes fraction')
@@ -898,7 +1002,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                 plt.figure()
                 plt.plot(newx, newy)
                 plt.xlabel("1/B  $(T^{-1})$")
-                plt.ylabel("Rxx")
+                plt.ylabel(y_lab)
                 plt.title("Inverted results of rotated FFT")
             
             
@@ -916,8 +1020,13 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
             #region = [[1.79e11, 2.3e11], [3.7e11, 4.2e11], [5.7e11, 6.2e11]]
             
             #region = [[0, 1.79e11], [2.3e11, 3.7e11], [4.2e11, 5.7e11], [6.2e11, 1e15]]
-            region = [[1.79e11,2.3e11] , [3.7e11, 4.2e11] , [5.7e11, 6.2e11]]
-
+            #region = [[1.79e11,2.3e11] , [3.7e11, 4.2e11] , [5.7e11, 6.2e11]]
+            
+            #region = [[0,2e11] , [3.8e11, 1e15]]       #ENTIRE ENVELOPE
+            #region = [[0,2.1e11], [2.46e11, 1e15]]
+            #region = [[0,2.45e11] , [2.9e11, 1e15]]
+            #region = [[0,2.9e11] , [3.2e11, 1e15]]
+            region = [[0,3.2e11] , [3.55e11, 1e15]]
             
             #use new_t array to copy all FFT data, but replace defined regions with zeros
             new_t = np.ones(len(D230831B_5_trans))
@@ -978,10 +1087,7 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
                 plt.figure()
                 plt.title("Inverted FFT with peaks removed")
                 plt.xlabel("1/B $(T^{-1})$")
-                if gradient == True:
-                    plt.ylabel("Deriv. of Rxx")
-                else:
-                    plt.ylabel("Rxx")
+                plt.ylabel(y_lab)
                 plt.ylim(np.min(D230831B_5_R_inv), np.max(D230831B_5_R_inv))
                 plt.annotate(text=r"$B$ range = ["+ np.format_float_positional(B_start, unique = False, precision=2)+ r" T, "+np.format_float_positional(B_end, unique = False, precision=2)+r"T]",
                          xy=[0.65,0.95],
@@ -1026,9 +1132,9 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, Vg = 000,
         
         #Gradient Dataframe
         Rxx_input = 0
-        Rxx_input = pd.DataFrame({'B_field': D230831B_5_B_inv,
+        Rxx_input = pd.DataFrame({'An_field': D230831B_5_B_inv,
                             'Rxx_input': D230831B_5_R_inv})
-        Rxx_input.sort_values(by='B_field',inplace=True,ignore_index=True)
+        Rxx_input.sort_values(by='An_field',inplace=True,ignore_index=True)
     
       
     if PlotFFTXX == 0:
@@ -1090,21 +1196,21 @@ def scaling(ref_df, df, scale, bounds, plot):
 
     '''
     scaled = ref_df.copy()
-    scaled.B_field *= scale
-    scaled_bounds = [scaled.B_field[bounds[0]], scaled.B_field[bounds[1]]]
+    scaled.An_field *= scale
+    scaled_bounds = [scaled.An_field[bounds[0]], scaled.An_field[bounds[1]]]
     
     
-    trans_bounds = get_closests(df, "B_field", scaled_bounds)
+    trans_bounds = get_closests(df, "An_field", scaled_bounds)
     
     if plot == True:
         
         plt.figure("RAWXX")
         plt.title("RAWXX, Vg =  mV")
-        plt.plot(ref_df.B_field, ref_df.Rxx, c = 'gray', linestyle = "--", alpha = 0.5, label = "Ref")
-        plt.plot(scaled.B_field, scaled.Rxx, c = 'r', label = "Scaled")
-        plt.plot(df.B_field, df.Rxx, c = 'b', label = "Compare")
+        plt.plot(ref_df.An_field, ref_df.Rxx, c = 'gray', linestyle = "--", alpha = 0.5, label = "Ref")
+        plt.plot(scaled.An_field, scaled.Rxx, c = 'r', label = "Scaled")
+        plt.plot(df.An_field, df.Rxx, c = 'b', label = "Compare")
         #plt.scatter([scaled_bounds[0], scaled_bounds[1]], [scaled.Rxx[bounds[0]], scaled.Rxx[bounds[1]]], c = 'r')
-        plt.scatter([df.B_field[trans_bounds[0]], df.B_field[trans_bounds[1]]], [df.Rxx[bounds[0]], df.Rxx[bounds[1]]], c = 'r')
+        plt.scatter([df.An_field[trans_bounds[0]], df.An_field[trans_bounds[1]]], [df.Rxx[bounds[0]], df.Rxx[bounds[1]]], c = 'r')
         plt.legend()
     
     
@@ -1125,18 +1231,18 @@ if __name__ == "__main__":
         #file_name = "D230831B_" + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
         file_name = "D230831B_4_" + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
         I = 1e-6
-        Iscaler = 1.0239
+        Iscalar = 1.0239
         
         D230831B_5_data = QFT.get_dat_data(file_path,file_name,R_ind = ["ETH"],
                                            has_header=True,data_headings=["variable x","lockin1 x", "lockin1 y", "lockin2 x", "lockin2 y", "lockin3 x", "lockin3 y"],
-                                           VoverI = (1/(I*Iscaler)), lockin2XX = True)
+                                           VoverI = (1/(I*Iscalar)), lockin2XX = True)
 
 
         #Ignore first and last 50 data points
         Rxx_x = D230831B_5_data.Rxx_x[50:-50]
         Rxy_x = D230831B_5_data.Rxy_x[50:-50]
         Rxx_x2 = D230831B_5_data.Rxx_x2[50:-50]
-        An_Field = D230831B_5_data.An_Field[50:-50]
+        An_field = D230831B_5_data.An_field[50:-50]
         
         
         Rxx_grad = np.empty(len(Rxx_x))
@@ -1161,7 +1267,7 @@ if __name__ == "__main__":
             rho_det_tot = rho_xy_tot**2 + rho_xx_tot**2
             # names = [('rho_xx_par_nu1','rho_xy_par_nu1')]
             
-             #### ne*c.e/An_Field     OR       nu*c.e**2/c.   #######
+             #### ne*c.e/An_field     OR       nu*c.e**2/c.   #######
 
             nu = 1
             rho_xx_par_nu1 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
@@ -1188,7 +1294,7 @@ if __name__ == "__main__":
             rho_xx_par_nu8 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
             rho_xy_par_nu8 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
             inv = 0
-            inv = pd.DataFrame({'B_field': D230831B_5_data.An_Field,
+            inv = pd.DataFrame({'An_field': D230831B_5_data.An_field,
                                 'Rxx': D230831B_5_data.Rxx_x,
                                 'Rxx_y':D230831B_5_data.Rxx_y,
                                 'Rxx2': D230831B_5_data.Rxx_x2,
@@ -1215,7 +1321,7 @@ if __name__ == "__main__":
                                 'rho_xx_par_nu8': rho_xx_par_nu8,
                                 'rho_xy_par_nu8':rho_xy_par_nu8
                                 })
-            inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+            inv.sort_values(by='An_field',inplace=True,ignore_index=True)
            
             
            
@@ -1244,18 +1350,18 @@ if __name__ == "__main__":
             #plt.plot(inv.Rxx)
             #plt.xlim([0.51, 0.53])
             #plt.ylim([0, 10])
-            plt.plot(inv.B_field,inv.Rxx, c = 'b', label = "Lockin 1")
-            #plt.plot(inv.B_field, inv.Rxx_y, c = 'b')
-            plt.plot(inv.B_field, inv.Rxx2, c = 'orange',label = "Lockin 3")
-            #plt.plot(inv.B_field, inv.Rxx2_y, c = 'orange')
-            #plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
-            #plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
-            # plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
-            # plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-            # plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-            # plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-            # plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-            # plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+            plt.plot(inv.An_field,inv.Rxx, c = 'b', label = "Lockin 1")
+            #plt.plot(inv.An_field, inv.Rxx_y, c = 'b')
+            plt.plot(inv.An_field, inv.Rxx2, c = 'orange',label = "Lockin 3")
+            #plt.plot(inv.An_field, inv.Rxx2_y, c = 'orange')
+            #plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
+            #plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
+            # plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
+            # plt.scatter([inv.An_field[nu_bounds[4][0]],inv.An_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
+            # plt.scatter([inv.An_field[nu_bounds[5][0]],inv.An_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+            # plt.scatter([inv.An_field[nu_bounds[6][0]],inv.An_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+            # plt.scatter([inv.An_field[nu_bounds[7][0]],inv.An_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+            # plt.scatter([inv.An_field[nu_bounds[8][0]],inv.An_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
             
 
             plt.ylabel("$R_{xx} (\Omega)$")
@@ -1269,18 +1375,18 @@ if __name__ == "__main__":
             plt.title("RAWXY, Vg = " + str(Vg) + "mV")
             # plt.plot(inv.Rxx[0:500])
             # plt.plot(inv.Rxx)
-            plt.plot(inv.B_field,inv.Rxy)
-            plt.plot(inv.B_field,inv.Rxy_y)
+            plt.plot(inv.An_field,inv.Rxy)
+            plt.plot(inv.An_field,inv.Rxy_y)
             #plt.xlim([4.0, 4.1])
             #plt.ylim([12925, 12950])
-            #plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxy[nu_bounds[1][0]],inv.Rxy[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
-            #plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxy[nu_bounds[2][0]],inv.Rxy[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
-            # plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
-            # plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-            # plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-            # plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-            # plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-            # plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+            #plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxy[nu_bounds[1][0]],inv.Rxy[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
+            #plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxy[nu_bounds[2][0]],inv.Rxy[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
+            # plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
+            # plt.scatter([inv.An_field[nu_bounds[4][0]],inv.An_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
+            # plt.scatter([inv.An_field[nu_bounds[5][0]],inv.An_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+            # plt.scatter([inv.An_field[nu_bounds[6][0]],inv.An_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+            # plt.scatter([inv.An_field[nu_bounds[7][0]],inv.An_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+            # plt.scatter([inv.An_field[nu_bounds[8][0]],inv.An_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
             plt.ylabel("$R_{xy} (\Omega)$")
             plt.xlabel("B (T)")
             plt.grid()
@@ -1291,29 +1397,29 @@ if __name__ == "__main__":
             #inv Rho_xx plots
             plt.figure("INVXX")
             nu=1
-            #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
-            #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',label=str(nu))
+            #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
+            #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',label=str(nu))
             nu=2
-            #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
-            plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r', label=str(nu))
+            #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
+            plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r', label=str(nu))
             # nu=3
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
             # nu=4
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
             # nu=5
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
             # nu=6
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
             # nu=7
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
             # nu=8
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
             plt.title(r"Parallel Resistivity XX, $\nu$ = 1-"+str(nu) + " Vg = " + str(Vg) + "mV")
             plt.ylabel(r"$\rho$ ($\Omega$)")
             plt.xlabel(r"$B$ (T)")
@@ -1327,29 +1433,29 @@ if __name__ == "__main__":
             
             plt.figure("INVXY")
             nu=1
-            #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
-            #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',label=str(nu))
+            #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label="Raw")
+            #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',label=str(nu))
             nu=2
-            #plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k', label = "Raw")
-            plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',label=str(nu))
+            #plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xy_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k', label = "Raw")
+            plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xy_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',label=str(nu))
             # nu=3
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
             # nu=4
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
             # nu=5
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
             # nu=6
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
             # nu=7
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
             # nu=8
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-            # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+            # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
             plt.title(r"Parallel Resistivity XY, $\nu$ = 1-"+ str(nu) + " Vg = " + str(Vg) + "mV")
             plt.ylabel(r"$\rho$ ($\Omega$)")
             plt.xlabel(r"$B$ (T)")
@@ -1369,7 +1475,7 @@ if __name__ == "__main__":
 
         Rxx_x = D230831B_5_data.Rxx_x[50:-50]
         Rxy_x = D230831B_5_data.Rxy_x[50:-50]
-        An_Field = D230831B_5_data.An_Field[50:-50]
+        An_field = D230831B_5_data.An_field[50:-50]
         Rxx_grad = np.empty(len(Rxx_x))
         Rxx_grad = np.gradient(Rxx_x)
         Rxy_grad = np.empty(len(Rxy_x))
@@ -1404,7 +1510,7 @@ if __name__ == "__main__":
         nu = 8
         rho_xx_par_nu8 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
         rho_xy_par_nu8 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-        inv = pd.DataFrame({'B_field': D230831B_5_data.An_Field,
+        inv = pd.DataFrame({'An_field': D230831B_5_data.An_field,
                             'Rxx': D230831B_5_data.Rxx_x,
                             'Rxy': D230831B_5_data.Rxy_x,
                             'p_xx_tot': rho_xx_tot,
@@ -1427,7 +1533,7 @@ if __name__ == "__main__":
                             'rho_xx_par_nu8': rho_xx_par_nu8,
                             'rho_xy_par_nu8':rho_xy_par_nu8
                             })
-        inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+        inv.sort_values(by='An_field',inplace=True,ignore_index=True)
         nu_bounds = []
         nu_bounds.append((0,0)) # nu = 0
         nu_bounds.append((1510,len(inv.Rxx)-1)) # nu = 1
@@ -1445,44 +1551,44 @@ if __name__ == "__main__":
         plt.figure()
         # plt.plot(inv.Rxx[0:500])
         # plt.plot(inv.Rxx)
-        plt.plot(inv.B_field,inv.Rxx)
-        plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
-        plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
-        # plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
-        # plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-        # plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-        # plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-        # plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-        # plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+        plt.plot(inv.An_field,inv.Rxx)
+        plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
+        plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
+        # plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
+        # plt.scatter([inv.An_field[nu_bounds[4][0]],inv.An_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
+        # plt.scatter([inv.An_field[nu_bounds[5][0]],inv.An_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+        # plt.scatter([inv.An_field[nu_bounds[6][0]],inv.An_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+        # plt.scatter([inv.An_field[nu_bounds[7][0]],inv.An_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+        # plt.scatter([inv.An_field[nu_bounds[8][0]],inv.An_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
         plt.grid()
         # plt.xlim(0,4)
         plt.legend()
 
         plt.figure()
         nu=1
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
         nu=2
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
         # nu=3
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
         # nu=4
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
         # nu=5
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
         # nu=6
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
         # nu=7
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
         # nu=8
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
         plt.title(r"Parallel Resistivity, $\nu$ = 1-"+str(nu))
         plt.ylabel(r"$\rho$ ($\Omega$)")
         plt.xlabel(r"$B$ (T)")
@@ -1504,7 +1610,7 @@ if __name__ == "__main__":
 
         Rxx_x = D230831B_5_data.Rxx_x[50:-50]
         Rxy_x = D230831B_5_data.Rxy_x[50:-50]
-        An_Field = D230831B_5_data.An_Field[50:-50]
+        An_field = D230831B_5_data.An_field[50:-50]
         Rxx_grad = np.empty(len(Rxx_x))
         Rxx_grad = np.gradient(Rxx_x)
         Rxy_grad = np.empty(len(Rxy_x))
@@ -1539,7 +1645,7 @@ if __name__ == "__main__":
         nu = 8
         rho_xx_par_nu8 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
         rho_xy_par_nu8 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-        inv = pd.DataFrame({'B_field': D230831B_5_data.An_Field,
+        inv = pd.DataFrame({'An_field': D230831B_5_data.An_field,
                             'Rxx': D230831B_5_data.Rxx_x,
                             'Rxy': D230831B_5_data.Rxy_x,
                             'p_xx_tot': rho_xx_tot,
@@ -1562,7 +1668,7 @@ if __name__ == "__main__":
                             'rho_xx_par_nu8': rho_xx_par_nu8,
                             'rho_xy_par_nu8':rho_xy_par_nu8
                             })
-        inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+        inv.sort_values(by='An_field',inplace=True,ignore_index=True)
         nu_bounds = []
         nu_bounds.append((0,0)) # nu = 0
         nu_bounds.append((1510,len(inv.Rxx)-1)) # nu = 1
@@ -1580,44 +1686,44 @@ if __name__ == "__main__":
         plt.figure()
         # plt.plot(inv.Rxx[0:500])
         # plt.plot(inv.Rxx)
-        plt.plot(inv.B_field,inv.Rxx)
-        plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
-        plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
-        # plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
-        # plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-        # plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-        # plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-        # plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-        # plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+        plt.plot(inv.An_field,inv.Rxx)
+        plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
+        plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
+        # plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
+        # plt.scatter([inv.An_field[nu_bounds[4][0]],inv.An_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
+        # plt.scatter([inv.An_field[nu_bounds[5][0]],inv.An_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+        # plt.scatter([inv.An_field[nu_bounds[6][0]],inv.An_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+        # plt.scatter([inv.An_field[nu_bounds[7][0]],inv.An_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+        # plt.scatter([inv.An_field[nu_bounds[8][0]],inv.An_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
         plt.grid()
         # plt.xlim(0,4)
         plt.legend()
 
         plt.figure()
         nu=1
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
         nu=2
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
         # nu=3
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
         # nu=4
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
         # nu=5
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
         # nu=6
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
         # nu=7
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
         # nu=8
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
         plt.title(r"Parallel Resistivity, $\nu$ = 1-"+str(nu))
         plt.ylabel(r"$\rho$ ($\Omega$)")
         plt.xlabel(r"$B$ (T)")
@@ -1638,7 +1744,7 @@ if __name__ == "__main__":
 
         Rxx_x = D230831B_5_data.Rxx_x[50:-50]
         Rxy_x = D230831B_5_data.Rxy_x[50:-50]
-        An_Field = D230831B_5_data.An_Field[50:-50]
+        An_field = D230831B_5_data.An_field[50:-50]
         Rxx_grad = np.empty(len(Rxx_x))
         Rxx_grad = np.gradient(Rxx_x)
         Rxy_grad = np.empty(len(Rxy_x))
@@ -1673,7 +1779,7 @@ if __name__ == "__main__":
         nu = 8
         rho_xx_par_nu8 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
         rho_xy_par_nu8 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-        inv = pd.DataFrame({'B_field': D230831B_5_data.An_Field,
+        inv = pd.DataFrame({'An_field': D230831B_5_data.An_field,
                             'Rxx': D230831B_5_data.Rxx_x,
                             'Rxy': D230831B_5_data.Rxy_x,
                             'p_xx_tot': rho_xx_tot,
@@ -1696,7 +1802,7 @@ if __name__ == "__main__":
                             'rho_xx_par_nu8': rho_xx_par_nu8,
                             'rho_xy_par_nu8':rho_xy_par_nu8
                             })
-        inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+        inv.sort_values(by='An_field',inplace=True,ignore_index=True)
         nu_bounds = []
         nu_bounds.append((0,0)) # nu = 0
         nu_bounds.append((1510,len(inv.Rxx)-1)) # nu = 1
@@ -1714,44 +1820,44 @@ if __name__ == "__main__":
         plt.figure()
         # plt.plot(inv.Rxx[0:500])
         # plt.plot(inv.Rxx)
-        plt.plot(inv.B_field,inv.Rxx)
-        plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
-        plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
-        # plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
-        # plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-        # plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-        # plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-        # plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-        # plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+        plt.plot(inv.An_field,inv.Rxx)
+        plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
+        plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
+        # plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
+        # plt.scatter([inv.An_field[nu_bounds[4][0]],inv.An_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
+        # plt.scatter([inv.An_field[nu_bounds[5][0]],inv.An_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+        # plt.scatter([inv.An_field[nu_bounds[6][0]],inv.An_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+        # plt.scatter([inv.An_field[nu_bounds[7][0]],inv.An_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+        # plt.scatter([inv.An_field[nu_bounds[8][0]],inv.An_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
         plt.grid()
         # plt.xlim(0,4)
         plt.legend()
 
         plt.figure()
         nu=1
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
         nu=2
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
         # nu=3
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
         # nu=4
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
         # nu=5
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
         # nu=6
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
         # nu=7
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
         # nu=8
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
         plt.title(r"Parallel Resistivity, $\nu$ = 1-"+str(nu))
         plt.ylabel(r"$\rho$ ($\Omega$)")
         plt.xlabel(r"$B$ (T)")
@@ -1771,7 +1877,7 @@ if __name__ == "__main__":
 
         Rxx_x = D230831B_5_data.Rxx_x[50:-50]
         Rxy_x = D230831B_5_data.Rxy_x[50:-50]
-        An_Field = D230831B_5_data.An_Field[50:-50]
+        An_field = D230831B_5_data.An_field[50:-50]
         Rxx_grad = np.empty(len(Rxx_x))
         Rxx_grad = np.gradient(Rxx_x)
         Rxy_grad = np.empty(len(Rxy_x))
@@ -1806,7 +1912,7 @@ if __name__ == "__main__":
         nu = 8
         rho_xx_par_nu8 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
         rho_xy_par_nu8 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-        inv = pd.DataFrame({'B_field': D230831B_5_data.An_Field,
+        inv = pd.DataFrame({'An_field': D230831B_5_data.An_field,
                             'Rxx': D230831B_5_data.Rxx_x,
                             'Rxy': D230831B_5_data.Rxy_x,
                             'p_xx_tot': rho_xx_tot,
@@ -1829,7 +1935,7 @@ if __name__ == "__main__":
                             'rho_xx_par_nu8': rho_xx_par_nu8,
                             'rho_xy_par_nu8':rho_xy_par_nu8
                             })
-        inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+        inv.sort_values(by='An_field',inplace=True,ignore_index=True)
         nu_bounds = []
         nu_bounds.append((0,0)) # nu = 0
         nu_bounds.append((1510,len(inv.Rxx)-1)) # nu = 1
@@ -1847,44 +1953,44 @@ if __name__ == "__main__":
         plt.figure()
         # plt.plot(inv.Rxx[0:500])
         # plt.plot(inv.Rxx)
-        plt.plot(inv.B_field,inv.Rxx)
-        plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
-        plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
-        # plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
-        # plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-        # plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
-        # plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
-        # plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
-        # plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
+        plt.plot(inv.An_field,inv.Rxx)
+        plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
+        plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
+        # plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
+        # plt.scatter([inv.An_field[nu_bounds[4][0]],inv.An_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
+        # plt.scatter([inv.An_field[nu_bounds[5][0]],inv.An_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="yellow",label=r"$\nu$= 5")
+        # plt.scatter([inv.An_field[nu_bounds[6][0]],inv.An_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="pink",label=r"$\nu$= 6")
+        # plt.scatter([inv.An_field[nu_bounds[7][0]],inv.An_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="cyan",label=r"$\nu$= 7")
+        # plt.scatter([inv.An_field[nu_bounds[8][0]],inv.An_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="green",label=r"$\nu$= 8")
         plt.grid()
         # plt.xlim(0,4)
         plt.legend()
 
         plt.figure()
         nu=1
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
         # nu=2
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
         # nu=3
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
         # nu=4
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
         # nu=5
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
         # nu=6
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
         # nu=7
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
         # nu=8
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
         plt.title(r"Parallel Resistivity, $\nu$ = 1-"+str(nu))
         plt.ylabel(r"$\rho$ ($\Omega$)")
         plt.xlabel(r"$B$ (T)")
@@ -1906,7 +2012,7 @@ if __name__ == "__main__":
 
         Rxx_x = D230831B_5_data.Rxx_x[50:-50]
         Rxy_x = D230831B_5_data.Rxy_x[50:-50]
-        An_Field = D230831B_5_data.An_Field[50:-50]
+        An_field = D230831B_5_data.An_field[50:-50]
         Rxx_grad = np.empty(len(Rxx_x))
         Rxx_grad = np.gradient(Rxx_x)
         Rxy_grad = np.empty(len(Rxy_x))
@@ -1941,7 +2047,7 @@ if __name__ == "__main__":
         nu = 8
         rho_xx_par_nu8 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
         rho_xy_par_nu8 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-        inv = pd.DataFrame({'B_field': D230831B_5_data.An_Field,
+        inv = pd.DataFrame({'An_field': D230831B_5_data.An_field,
                             'Rxx': D230831B_5_data.Rxx_x,
                             'Rxy': D230831B_5_data.Rxy_x,
                             'p_xx_tot': rho_xx_tot,
@@ -1964,7 +2070,7 @@ if __name__ == "__main__":
                             'rho_xx_par_nu8': rho_xx_par_nu8,
                             'rho_xy_par_nu8':rho_xy_par_nu8
                             })
-        inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+        inv.sort_values(by='An_field',inplace=True,ignore_index=True)
         nu_bounds = []
         nu_bounds.append((0,0)) # nu = 0
         nu_bounds.append((1410,1600)) # nu = 1
@@ -1980,44 +2086,44 @@ if __name__ == "__main__":
 
         plt.figure()
         # plt.plot(inv.Rxx[0:500])
-        plt.plot(inv.B_field,inv.Rxx)
-        plt.scatter([inv.B_field[nu_bounds[1][0]],inv.B_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
-        plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
-        plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
-        plt.scatter([inv.B_field[nu_bounds[4][0]],inv.B_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
-        plt.scatter([inv.B_field[nu_bounds[5][0]],inv.B_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="purple",label=r"$\nu$= 5")
-        plt.scatter([inv.B_field[nu_bounds[6][0]],inv.B_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="purple",label=r"$\nu$= 6")
-        plt.scatter([inv.B_field[nu_bounds[7][0]],inv.B_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="purple",label=r"$\nu$= 7")
-        plt.scatter([inv.B_field[nu_bounds[8][0]],inv.B_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="purple",label=r"$\nu$= 8")
+        plt.plot(inv.An_field,inv.Rxx)
+        plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
+        plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
+        plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
+        plt.scatter([inv.An_field[nu_bounds[4][0]],inv.An_field[nu_bounds[4][1]]],[inv.Rxx[nu_bounds[4][0]],inv.Rxx[nu_bounds[4][1]]],color="purple",label=r"$\nu$= 4")
+        plt.scatter([inv.An_field[nu_bounds[5][0]],inv.An_field[nu_bounds[5][1]]],[inv.Rxx[nu_bounds[5][0]],inv.Rxx[nu_bounds[5][1]]],color="purple",label=r"$\nu$= 5")
+        plt.scatter([inv.An_field[nu_bounds[6][0]],inv.An_field[nu_bounds[6][1]]],[inv.Rxx[nu_bounds[6][0]],inv.Rxx[nu_bounds[6][1]]],color="purple",label=r"$\nu$= 6")
+        plt.scatter([inv.An_field[nu_bounds[7][0]],inv.An_field[nu_bounds[7][1]]],[inv.Rxx[nu_bounds[7][0]],inv.Rxx[nu_bounds[7][1]]],color="purple",label=r"$\nu$= 7")
+        plt.scatter([inv.An_field[nu_bounds[8][0]],inv.An_field[nu_bounds[8][1]]],[inv.Rxx[nu_bounds[8][0]],inv.Rxx[nu_bounds[8][1]]],color="purple",label=r"$\nu$= 8")
         plt.grid()
         plt.legend()
 
         plt.figure()
         nu_colors = ['k','b','r','g']
         nu=1
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$\rho_\mathrm{xx}^\mathrm{tot}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color='b',ls=":",label=r'$\rho_\mathrm{xx}^\mathrm{\|\|}$')
         nu=2
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color='r',ls=":")
         nu=3
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu3[nu_bounds[nu][0]:nu_bounds[nu][1]],color='orange',ls=":")
         nu=4
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu4[nu_bounds[nu][0]:nu_bounds[nu][1]],color='purple',ls=":")
         nu=5
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu5[nu_bounds[nu][0]:nu_bounds[nu][1]],color='yellow',ls=":")
         nu=6
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu6[nu_bounds[nu][0]:nu_bounds[nu][1]],color='pink',ls=":")
         nu=7
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu7[nu_bounds[nu][0]:nu_bounds[nu][1]],color='cyan',ls=":")
         nu=8
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.p_xx_tot[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu8[nu_bounds[nu][0]:nu_bounds[nu][1]],color='green',ls=":")
         plt.title(r"Parallel Resistivity, $\nu$ = 1-"+str(nu))
         plt.ylabel(r"$\rho$ ($\Omega$)")
         plt.xlabel(r"$B$ (T)")
@@ -2025,8 +2131,8 @@ if __name__ == "__main__":
 
         # plt.figure()
         # nu=3
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
         # plt.legend()
 
 
@@ -2042,7 +2148,7 @@ if __name__ == "__main__":
                                            data_headings=["variable x", "lockin1 x", "lockin1 y", "lockin1 x", "lockin1 y"])
         plt.figure() 
         # plt.xlim(4,6)
-        plt.plot(D230831B_5_data.An_Field,1e6*D230831B_5_data.Rxx_x)
+        plt.plot(D230831B_5_data.An_field,1e6*D230831B_5_data.Rxx_x)
         plt.ylim(bottom=0,top=10000)
         plt.ylabel(r"$R_\mathrm{xx}$ ($\mathrm{\mu \Omega}$)")
         plt.xlabel(r"$B$ (T)")
@@ -2056,7 +2162,7 @@ if __name__ == "__main__":
         # D230831B_5_data = QFT.get_dat_data(file_path,file,R_ind = ["ETH"],has_header=True,
         #                                    data_headings=["variable x", "lockin1 x", "lockin1 y", "lockin1 x", "lockin1 y"])
         # plt.figure() 
-        # plt.plot(D230831B_5_data.An_Field,-1e3*D230831B_5_data.Rxy_x)
+        # plt.plot(D230831B_5_data.An_field,-1e3*D230831B_5_data.Rxy_x)
         # # plt.xlim(0,1)
         # # plt.ylim(bottom=0)
         # plt.ylabel(r"$R_\mathrm{xy}$ (m$\mathrm{\Omega}$)")
@@ -2068,14 +2174,14 @@ if __name__ == "__main__":
         # for Vg in Vg_vals:
         #     file = "D230831B_5_inv_Bsweep_" + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
         #     # print(file_names[i])
-        #     D230831B_5_data = QFT.get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+        #     D230831B_5_data = QFT.get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
         #     scaling_1 = 9e-4
         #     knee = 400
         #     scaling_2 = 7e-4
         #     if Vg <=knee:
-        #         new_B = D230831B_5_data.An_Field / (scaling_1*Vg + 1)
+        #         new_B = D230831B_5_data.An_field / (scaling_1*Vg + 1)
         #     else:
-        #         new_B = D230831B_5_data.An_Field / (scaling_2*(Vg - knee) + scaling_1*knee + 1)
+        #         new_B = D230831B_5_data.An_field / (scaling_2*(Vg - knee) + scaling_1*knee + 1)
             
         #     plt.plot(new_B,D230831B_5_data.Rxy_x,label=str(Vg))
         #     # plt.xlim(0,3)
@@ -2101,14 +2207,14 @@ if __name__ == "__main__":
         for Vg in Vg_vals:
             file = "D230831B_5_inv_Bsweep_" + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
             # print(file_names[i])
-            D230831B_5_data = QFT.get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+            D230831B_5_data = QFT.get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
             scaling_1 = 3e-4
             knee = 900
             scaling_2 = 7e-4
             if Vg <=knee:
-                new_B = D230831B_5_data.An_Field / (scaling_1*Vg + 1)
+                new_B = D230831B_5_data.An_field / (scaling_1*Vg + 1)
             else:
-                new_B = D230831B_5_data.An_Field / (scaling_2*(Vg - knee) + scaling_1*knee + 1)
+                new_B = D230831B_5_data.An_field / (scaling_2*(Vg - knee) + scaling_1*knee + 1)
             
             plt.plot(new_B,D230831B_5_data.Rxx_x,label=str(Vg))
             # plt.xlim(0,3)
@@ -2122,14 +2228,14 @@ if __name__ == "__main__":
         # for Vg in Vg_vals:
         #     file = "D230831B_5_inv_Bsweep_" + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
         #     # print(file_names[i])
-        #     D230831B_5_data = QFT.get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+        #     D230831B_5_data = QFT.get_dat_data(file_path,file,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
         #     scaling_1 = 9e-4
         #     knee = 400
         #     scaling_2 = 7e-4
         #     if Vg <=knee:
-        #         new_B = D230831B_5_data.An_Field / (scaling_1*Vg + 1)
+        #         new_B = D230831B_5_data.An_field / (scaling_1*Vg + 1)
         #     else:
-        #         new_B = D230831B_5_data.An_Field / (scaling_2*(Vg - knee) + scaling_1*knee + 1)
+        #         new_B = D230831B_5_data.An_field / (scaling_2*(Vg - knee) + scaling_1*knee + 1)
             
         #     plt.plot(new_B,D230831B_5_data.Rxy_x,label=str(Vg))
         #     # plt.xlim(0,3)
@@ -2155,11 +2261,11 @@ if __name__ == "__main__":
         Vg = 150#[-200, -100, 0]
         file_name = "D230831B_5_inv_Bsweep_" + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
         # print(file_names[i])
-        D230831B_5_data = QFT.get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+        D230831B_5_data = QFT.get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
 
         Rxx_x = D230831B_5_data.Rxx_x[50:-50]
         Rxy_x = D230831B_5_data.Rxy_x[50:-50]
-        An_Field = D230831B_5_data.An_Field[50:-50]
+        An_field = D230831B_5_data.An_field[50:-50]
         Rxx_grad = np.empty(len(Rxx_x))
         Rxx_grad = np.gradient(Rxx_x)
         Rxy_grad = np.empty(len(Rxy_x))
@@ -2176,7 +2282,7 @@ if __name__ == "__main__":
         nu = 2
         rho_xx_par_nu2 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
         rho_xy_par_nu2 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-        inv = pd.DataFrame({'B_field': D230831B_5_data.An_Field,
+        inv = pd.DataFrame({'An_field': D230831B_5_data.An_field,
                             'Rxx': D230831B_5_data.Rxx_x,
                             'Rxy': D230831B_5_data.Rxy_x,
                             'p_xx_tot': rho_xx_tot,
@@ -2187,7 +2293,7 @@ if __name__ == "__main__":
                             'rho_xx_par_nu2': rho_xx_par_nu2,
                             'rho_xy_par_nu2': rho_xy_par_nu2
                             })
-        inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+        inv.sort_values(by='An_field',inplace=True,ignore_index=True)
         nu_bounds = []
         nu_bounds.append((0,0)) # nu = 0
         nu_bounds.append((0,0)) # nu = 1
@@ -2197,23 +2303,23 @@ if __name__ == "__main__":
         # plt.plot(inv.Rxx[nu_bounds[3][0]:nu_bounds[3][1]])
 
         plt.figure()
-        plt.plot(inv.B_field,inv.Rxx)
-        plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="b",label=r"$\nu$ = 2")
-        plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="r",label=r"$\nu$ = 3")
+        plt.plot(inv.An_field,inv.Rxx)
+        plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="b",label=r"$\nu$ = 2")
+        plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="r",label=r"$\nu$ = 3")
         plt.grid()
         plt.legend()
 
         # plt.figure()
         # nu_colors = ['k','b','r','g']
         # nu=2
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
         # plt.legend()
 
         # plt.figure()
         # nu=3
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
-        # plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
+        # plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
         # plt.legend()
 
 
@@ -2227,11 +2333,11 @@ if __name__ == "__main__":
         Vg = -100#[-200, -100, 0]
         file_name = "D230831B_5_inv_Bsweep_" + np.format_float_positional(Vg,unique=False,pad_left=3,precision=3,trim="-").replace(" ","0") + "mV_Vg.dat"
         # print(file_names[i])
-        D230831B_5_data = QFT.get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_Field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
+        D230831B_5_data = QFT.get_dat_data(file_path,file_name,R_ind = ["ETH"],has_header=False,data_headings=["An_field","Rxx_x", "Rxy_x", "Rxx_y", "Rxy_y"])
 
         Rxx_x = D230831B_5_data.Rxx_x[50:-50]
         Rxy_x = D230831B_5_data.Rxy_x[50:-50]
-        An_Field = D230831B_5_data.An_Field[50:-50]
+        An_field = D230831B_5_data.An_field[50:-50]
         Rxx_grad = np.empty(len(Rxx_x))
         Rxx_grad = np.gradient(Rxx_x)
         Rxy_grad = np.empty(len(Rxy_x))
@@ -2248,7 +2354,7 @@ if __name__ == "__main__":
         nu = 2
         rho_xx_par_nu2 = rho_xx_tot * rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
         rho_xy_par_nu2 = (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)* rho_det_tot /( (rho_xx_tot)**2 + (rho_xy_tot - rho_det_tot*nu*c.e**2/c.h)**2)
-        inv = pd.DataFrame({'B_field': D230831B_5_data.An_Field,
+        inv = pd.DataFrame({'An_field': D230831B_5_data.An_field,
                             'Rxx': D230831B_5_data.Rxx_x,
                             'Rxy': D230831B_5_data.Rxy_x,
                             'p_xx_tot': rho_xx_tot,
@@ -2259,7 +2365,7 @@ if __name__ == "__main__":
                             'rho_xx_par_nu2': rho_xx_par_nu2,
                             'rho_xy_par_nu2': rho_xy_par_nu2
                             })
-        inv.sort_values(by='B_field',inplace=True,ignore_index=True)
+        inv.sort_values(by='An_field',inplace=True,ignore_index=True)
         nu_bounds = []
         nu_bounds.append((0,0)) # nu = 0
         nu_bounds.append((0,0)) # nu = 1
@@ -2269,41 +2375,38 @@ if __name__ == "__main__":
         # plt.plot(inv.Rxx[nu_bounds[3][0]:nu_bounds[3][1]])
 
         # plt.figure()
-        # plt.plot(inv.B_field,inv.Rxx)
-        # plt.scatter([inv.B_field[nu_bounds[2][0]],inv.B_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="b",label=r"$\nu$ = 2")
-        # plt.scatter([inv.B_field[nu_bounds[3][0]],inv.B_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="r",label=r"$\nu$ = 3")
+        # plt.plot(inv.An_field,inv.Rxx)
+        # plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="b",label=r"$\nu$ = 2")
+        # plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="r",label=r"$\nu$ = 3")
         # plt.grid()
         # plt.legend()
 
         plt.figure()
         nu_colors = ['k','b','r','g']
         nu=2
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu1[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
         plt.legend()
 
         plt.figure()
         nu=3
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
-        plt.plot(inv.B_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.Rxx[nu_bounds[nu][0]:nu_bounds[nu][1]],color='k',label=r'$R_\mathrm{xx}$')
+        plt.plot(inv.An_field[nu_bounds[nu][0]:nu_bounds[nu][1]],inv.rho_xx_par_nu2[nu_bounds[nu][0]:nu_bounds[nu][1]],color=nu_colors[nu],label=r'$\nu$ = '+str(nu))
         plt.legend()
 
-    #ParallelAnalysis(Vg = 100, lockin2XX = True, I = 1e-6, Iscaler = 1.0, Rotate = [0,0,0], ne = 4E15)
+    #ParallelAnalysis(Vg = 100, lockin2XX = True, I = 1e-6, Iscalar = 1.0, Rotate = [0,0,0], ne = 4E15)
         
         # plt.figure()
-        # plt.plot(An_Field,Rxx_x/np.amax(Rxx_x),label=r"Rxx")
-        # plt.plot(An_Field,Rxx_grad/np.amax(Rxx_grad),label=r"dRxx")
-        # plt.plot(An_Field,Rxx_x/np.amax(Rxx_x) - Rxx_grad/np.amax(Rxx_grad),label=r"Rxx - dRxx")
-        # plt.plot(An_Field,Rxy_x/np.amax(Rxy_x),label=r"Rxy")
-        # print(inv.B_field[nu_bounds[1][0]])
-        # plt.plot(An_Field,Rxy_grad/np.amax(Rxy_grad),label=r"dRxy")
-        # plt.plot(An_Field,Rxy_x/np.amax(Rxy_x) - Rxy_grad/np.amax(Rxy_grad),label=r"Rxy - dRxy")
+        # plt.plot(An_field,Rxx_x/np.amax(Rxx_x),label=r"Rxx")
+        # plt.plot(An_field,Rxx_grad/np.amax(Rxx_grad),label=r"dRxx")
+        # plt.plot(An_field,Rxx_x/np.amax(Rxx_x) - Rxx_grad/np.amax(Rxx_grad),label=r"Rxx - dRxx")
+        # plt.plot(An_field,Rxy_x/np.amax(Rxy_x),label=r"Rxy")
+        # print(inv.An_field[nu_bounds[1][0]])
+        # plt.plot(An_field,Rxy_grad/np.amax(Rxy_grad),label=r"dRxy")
+        # plt.plot(An_field,Rxy_x/np.amax(Rxy_x) - Rxy_grad/np.amax(Rxy_grad),label=r"Rxy - dRxy")
         # plt.title(r"R_{xx} gradient")
         # plt.grid()
         # plt.legend()
-
-
-
 
 
 
