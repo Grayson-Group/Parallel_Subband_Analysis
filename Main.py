@@ -4,6 +4,7 @@ Created on Sat Oct 28 14:36:14 2023
 
 @author: Madma
 """
+#BOO
 import scipy.constants as c
 import pandas as pd
 import matplotlib.pyplot as plt
