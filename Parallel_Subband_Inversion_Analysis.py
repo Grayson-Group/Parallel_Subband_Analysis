@@ -507,10 +507,10 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, sigma = Fal
         plt.title("RAWXX, Vg = " + str(Vg) + "mV")
         if Rxx_1or2 == 1:
             plt.plot(inv.An_field,inv.Rxx_x, c = 'b', label = "Rxx")
-            plt.plot(inv.An_field, inv.Rxx_y, c = 'b', linestyle = "--", label = "Rxx_y")
+            #plt.plot(inv.An_field, inv.Rxx_y, c = 'b', linestyle = "--", label = "Rxx_y")
         if Rxx_1or2 == 2:
             plt.plot(inv.An_field, inv.Rxx_x2, c = 'b',label = "Rxx_2")
-            plt.plot(inv.An_field, inv.Rxx_y2, c = 'b', linestyle = "--", label = "Rxx_y2")
+            #plt.plot(inv.An_field, inv.Rxx_y2, c = 'b', linestyle = "--", label = "Rxx_y2")
         #plt.scatter([inv.An_field[nu_bounds[1][0]],inv.An_field[nu_bounds[1][1]]],[inv.Rxx[nu_bounds[1][0]],inv.Rxx[nu_bounds[1][1]]],color="b",label=r"$\nu$= 1")
         #plt.scatter([inv.An_field[nu_bounds[2][0]],inv.An_field[nu_bounds[2][1]]],[inv.Rxx[nu_bounds[2][0]],inv.Rxx[nu_bounds[2][1]]],color="r",label=r"$\nu$= 2")
         #plt.scatter([inv.An_field[nu_bounds[3][0]],inv.An_field[nu_bounds[3][1]]],[inv.Rxx[nu_bounds[3][0]],inv.Rxx[nu_bounds[3][1]]],color="orange",label=r"$\nu$= 3")
@@ -877,16 +877,16 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, sigma = Fal
         #ax1.set_xlim(0,5E11)
         
         
-        ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), c = "black", linestyle = '--', label = "Magn")
-        ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "Real")
-        ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "Imag")
+        ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.abs(D230831B_5_trans[fft_start:fft_cutoff]), c = "blue", linestyle = '-', label = "Magnitude")
+        #ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(D230831B_5_trans[fft_start:fft_cutoff]), c='b', label = "Real")
+        #ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(D230831B_5_trans[fft_start:fft_cutoff]), c='r', label = "Imag")
         ax1.set_xlabel("B ($T$)")
         ax1.set_xlim(0, 10)
         
         
         #Create x-axis copy to show B field frequency breakdown
         ax1.set_ylabel(r'FFT Amplitude')
-        ax1.legend(loc = "lower right")
+        ax1.legend(loc = "upper right")
         title = ax1.set_title("Final FFT results")
         title.set_y(1.1)
         
@@ -943,14 +943,14 @@ def ParallelAnalysis(lockin2XX: bool, gradient: bool, Rxx_1or2: int, sigma = Fal
 
              
             ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.abs(rotated_FFT[fft_start:fft_cutoff]), c="black", linestyle = '--', label = "Magn")
-            ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(rotated_FFT[fft_start:fft_cutoff]), c='b', label = "Real")
-            ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(rotated_FFT[fft_start:fft_cutoff]), c='r', label = "Imag")
+            #ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.real(rotated_FFT[fft_start:fft_cutoff]), c='b', label = "Real")
+            #ax1.plot(D230831B_5_f_array[fft_start:fft_cutoff], 1e-6*np.imag(rotated_FFT[fft_start:fft_cutoff]), c='r', label = "Imag")
             ax1.set_xlabel("B (${T}$)")
             ax1.set_ylabel(r'FFT Amplitude')
             ax1.legend(loc = "lower right")
-            ax1.annotate(text = "Rotated with frequency of: \n" + f"{omega/(2*c.pi):f}" + " $T^{-1}$", 
-                         xy=[0.45,0.85],
-                         xycoords='axes fraction')
+            #ax1.annotate(text = "Rotated with frequency of: \n" + f"{omega/(2*c.pi):f}" + " $T^{-1}$", 
+            #             xy=[0.45,0.85],
+            #             xycoords='axes fraction')
             ax1.set_title("Rotated FFT results")
             ax1.set_xlim(0,10)
             

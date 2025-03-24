@@ -43,7 +43,7 @@ USE THESE PARAMETERS for ETH data:
 if __name__ == "__main__":
     
     Von_Klitz = 25812.80745
-    NU = True    #If true, will use Northwestern University data architecture. If false, use ETH's data architecture
+    NU = False    #If true, will use Northwestern University data architecture. If false, use ETH's data architecture
     
     
     if NU == False: 
@@ -55,8 +55,8 @@ if __name__ == "__main__":
                         #OR it can be a string for specialized data files
     
         #Vg_val = [000, 100, 150, 175, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 450, 500, 550, 600]  
-        #Vg_val = 000
-        Vg_val = [000, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 650]
+        Vg_val = 450
+        #Vg_val = [000, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 650]
                          
         #Vg_val = "D230831B_4_Last_"                       
     #                                   List of Specialized Data Files 
@@ -112,20 +112,20 @@ if __name__ == "__main__":
                     650: "240501_077_GaAs_D230831B_5_I100nA_G065_T2_B0_Vxx_Vxy",
                     700: "240501_078_GaAs_D230831B_5_I100nA_G07_T2_B1_Vxx_Vxy"}
         
-        lockin2xx_bool = False
+        lockin2xx_bool = True
         Rotate_list = [0, 0, 0]
 
         I = 0.98E-7
         Iscalar = 1.0
         Rxx = 1  #This value is meaningless for NU data
 
-        #Vg_val = 250
-        Vg_val = [0, 100, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700]
+        Vg_val = 450
+        #Vg_val = [0, 100, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700]
         #Vg_val = 700
 
         
         
-        B_range = [0.2, 0.85]
+        B_range = [0.1, 0.45]
 ###################################################################################
     
 
